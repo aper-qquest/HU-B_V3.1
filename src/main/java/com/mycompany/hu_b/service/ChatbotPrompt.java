@@ -295,6 +295,76 @@ public class ChatbotPrompt {
                 .replace("{{vraag}}", question);
     }
 
+    // Maakt een prompt voor een conceptmail op basis van een eerder antwoord met e-mailadressen.
+    public String buildEmailDraftPrompt(String originalQuestion,
+                                       String resolvedQuestion,
+                                       String originalAnswer,
+                                       String userConfirmation,
+                                       List<String> emailAddresses,
+                                       String contextString,
+                                       String conversationHistoryText) {
+
+        String emailsText = (emailAddresses == null || emailAddresses.isEmpty())
+                ? "Geen e-mailadressen bekend."
+                : String.join(", ", emailAddresses);
+
+        String systemPrompt =
+                "# ROLE " +
+                "Je bent HU-B en helpt de gebruiker met het opstellen van een vriendelijke e-mail." +
+
+                "# DOEL " +
+                "Maak een conceptmail op basis van de feitelijke informatie uit de meegegeven context en het eerdere antwoord. " +
+                "De mail moet geschikt zijn om naar het genoemde e-mailadres of de genoemde e-mailadressen te sturen." +
+
+                "# CONSTRAINTS (STRIKTE REGELS) " +
+                "1. Gebruik alleen de informatie uit de <context> en de eerdere beantwoording. " +
+                "Verzin geen feiten, namen, data, bedragen of contactgegevens. " +
+                "Als iets ontbreekt, gebruik een duidelijke placeholder zoals [jouw naam] of [datum]. " +
+                "2. Schrijf in vriendelijke stijl. Houd het compact en concreet. Vermijd aanhef van u of je. " +
+                "3. Maak de output direct bruikbaar als e-mailconcept. " +
+                "Gebruik bij voorkeur de structuur: Onderwerp, Aan, Aanhef, Bericht en Afsluiting. " +
+                "4. Als de gebruiker in de bevestiging extra wensen noemt, verwerk die alleen als ze niet botsen met de context. " +
+                "5. Noem geen bron-ID's of technische uitleg in de mail zelf. " +
+
+                "# OUTPUT FORMAT " +
+                "Gebruik exact deze structuur: " +
+                "Onderwerp: [korte onderwerpregel] " +
+                "Aan: [e-mailadres of e-mailadressen] " +
+                "Conceptmail: [de volledige e-mailtekst] " +
+
+                "<bevestiging_gebruiker> " +
+                "{{bevestiging_gebruiker}} " +
+                "</bevestiging_gebruiker> " +
+
+                "<e-mailadressen> " +
+                "{{e-mailadressen}} " +
+                "</e-mailadressen> " +
+
+                "<context> " +
+                "{{context}} " +
+                "</context> " +
+
+                "<eerdere_beantwoording> " +
+                "{{eerdere_beantwoording}} " +
+                "</eerdere_beantwoording> " +
+
+                "<opgeloste_vraag> " +
+                "{{opgeloste_vraag}} " +
+                "</opgeloste_vraag> " +
+
+                "<oorspronkelijke_vraag> " +
+                "{{oorspronkelijke_vraag}} " +
+                "</oorspronkelijke_vraag>";
+
+        return systemPrompt
+                .replace("{{bevestiging_gebruiker}}", userConfirmation == null ? "Geen extra bevestiging." : userConfirmation)
+                .replace("{{e-mailadressen}}", emailsText)
+                .replace("{{context}}", contextString == null ? "Geen relevante context." : contextString)
+                .replace("{{eerdere_beantwoording}}", originalAnswer == null ? "Geen eerder antwoord." : originalAnswer)
+                .replace("{{oorspronkelijke_vraag}}", originalQuestion == null ? "Geen oorspronkelijke vraag." : originalQuestion)
+                .replace("{{opgeloste_vraag}}", resolvedQuestion == null ? "Geen opgeloste vraag." : resolvedQuestion);
+    }
+
     // Bouwt een compacte tekstweergave van recente vraag-antwoordparen.
     // Deze historie helpt het model bij vervolgvragen, maar geldt niet als feitelijke bron.
     public String buildConversationHistoryText(List<JSONObject> conversationHistory) {

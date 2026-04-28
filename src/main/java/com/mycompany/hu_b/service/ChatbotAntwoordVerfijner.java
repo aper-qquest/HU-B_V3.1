@@ -14,6 +14,9 @@ import java.net.URI;
 
 public class ChatbotAntwoordVerfijner {
 
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "(?i)\\b[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}\\b");
+
     private final PdfProcessing knowledgeService;
     private final OpenAI openAIService;
 
@@ -40,6 +43,7 @@ public class ChatbotAntwoordVerfijner {
             answerText = rawAnswer.trim();
         }
         answerText = stripSourceArtifacts(answerText);
+        answerText = linkifyEmailAddresses(answerText);
 
 // Haal bron-ID's op
         String bronField = extractField(rawAnswer, "BronID:");
@@ -94,6 +98,22 @@ public class ChatbotAntwoordVerfijner {
         return "Functie: " + assumedFunction + "\n"
                 + "Antwoord: " + answerText.trim() + "\n"
                 + "Bron: " + bronText;
+    }
+
+    private String linkifyEmailAddresses(String text) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+
+        Matcher matcher = EMAIL_PATTERN.matcher(text);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            String email = matcher.group();
+            String replacement = "<a href=\"mailto:" + email + "\">" + email + "</a>";
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 
     private String resolveAssumedFunction(String question,
