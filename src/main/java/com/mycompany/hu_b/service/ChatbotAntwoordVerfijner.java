@@ -196,14 +196,12 @@ public class ChatbotAntwoordVerfijner {
         String sourcePath = chunk.getSourcePath();
         int page = chunk.getPage();
         String pageText = page > 0 ? "pagina " + page : null;
+        String linkTarget = buildSourceTarget(chunk);
 
         if ((sourceName != null && !sourceName.isBlank()) || (sourceUrl != null && !sourceUrl.isBlank())) {
             String displayLabel = label != null && !label.isBlank()
                     ? label
                     : (sourceName != null && !sourceName.isBlank() ? sourceName : "webpagina");
-            String linkTarget = sourceUrl != null && !sourceUrl.isBlank()
-                    ? sourceUrl
-                    : toFileUri(sourcePath);
             if (linkTarget != null && !linkTarget.isBlank()) {
                 return buildHtmlLink(displayLabel, linkTarget);
             }
@@ -211,28 +209,88 @@ public class ChatbotAntwoordVerfijner {
         }
 
         if (label != null && !label.isBlank()) {
+            if (linkTarget != null && !linkTarget.isBlank()) {
+                String displayLabel = chunk.isSourcePdf() && pageText != null ? label + " (" + pageText + ")" : label;
+                return buildHtmlLink(displayLabel, linkTarget);
+            }
+            return label + (chunk.isSourcePdf() && pageText != null ? " (" + pageText + ")" : "");
+        }
+
+        if (linkTarget != null && !linkTarget.isBlank()) {
             if (chunk.isSourcePdf() && pageText != null) {
-                String linkTarget = toFileUri(sourcePath);
-                return linkTarget != null ? buildHtmlLink(label + " (" + pageText + ")", linkTarget) : label + " (" + pageText + ")";
+                return buildHtmlLink(pageText, linkTarget);
             }
-            if (sourcePath != null && !sourcePath.isBlank()) {
-                String linkTarget = toFileUri(sourcePath);
-                return linkTarget != null ? buildHtmlLink(label, linkTarget) : label;
-            }
-            return label;
-        }
-
-        if (chunk.isSourcePdf() && pageText != null) {
-            String linkTarget = toFileUri(sourcePath);
-            return linkTarget != null ? buildHtmlLink(pageText, linkTarget) : pageText;
-        }
-
-        if (sourcePath != null && !sourcePath.isBlank()) {
-            String linkTarget = toFileUri(sourcePath);
-            return linkTarget != null ? buildHtmlLink(page > 0 ? "PAGINA " + page : "bron", linkTarget) : (page > 0 ? "PAGINA " + page : "N.v.t.");
+            return buildHtmlLink(page > 0 ? "PAGINA " + page : "bron", linkTarget);
         }
 
         return page > 0 ? "PAGINA " + page : "N.v.t.";
+    }
+
+    private String buildSourceTarget(ChunkEmbedding chunk) {
+        if (chunk == null) {
+            return null;
+        }
+
+        String sourceTarget = chunk.getSourceTarget();
+        if (sourceTarget != null && !sourceTarget.isBlank()) {
+            return sourceTarget;
+        }
+
+        String sourceUrl = chunk.getSourceUrl();
+        String sourcePath = chunk.getSourcePath();
+        int page = chunk.getPage();
+
+        if (sourceUrl != null && !sourceUrl.isBlank()) {
+            String trimmedUrl = sourceUrl.trim();
+            if (chunk.isSourcePdf() && page > 0) {
+                if (looksLikePdfLink(trimmedUrl)) {
+                    return appendPdfPageFragment(trimmedUrl, page);
+                }
+                if (sourcePath != null && !sourcePath.isBlank()) {
+                    return toFileUriWithPage(sourcePath, page);
+                }
+            }
+            return trimmedUrl;
+        }
+
+        if (sourcePath != null && !sourcePath.isBlank()) {
+            return chunk.isSourcePdf() && page > 0
+                    ? toFileUriWithPage(sourcePath, page)
+                    : toFileUri(sourcePath);
+        }
+
+        return null;
+    }
+
+    private boolean looksLikePdfLink(String sourceUrl) {
+        if (sourceUrl == null || sourceUrl.isBlank()) {
+            return false;
+        }
+        String normalized = sourceUrl.trim().toLowerCase();
+        return normalized.endsWith(".pdf") || normalized.contains(".pdf?") || normalized.contains(".pdf#");
+    }
+
+    private String appendPdfPageFragment(String url, int page) {
+        if (url == null || url.isBlank() || page <= 0) {
+            return url;
+        }
+        String trimmedUrl = url.trim();
+        if (trimmedUrl.contains("#")) {
+            return trimmedUrl;
+        }
+        return trimmedUrl + "#page=" + page;
+    }
+
+    private String toFileUriWithPage(String sourcePath, int page) {
+        if (sourcePath == null || sourcePath.isBlank() || page <= 0) {
+            return toFileUri(sourcePath);
+        }
+
+        try {
+            return Path.of(sourcePath).toAbsolutePath().normalize().toUri().toString() + "#page=" + page;
+        } catch (Exception ex) {
+            return toFileUri(sourcePath);
+        }
     }
 
     private String buildHtmlLink(String label, String href) {

@@ -31,21 +31,22 @@ public class ChunkEmbedding {
     private final String sourceUrl;
     private final String sourceName;
     private final String sourcePath;
+    private final String sourceTarget;
     private final boolean sourceIsPdf;
     private final boolean primaryGuide;
     
 // Maakt een definitieve chunk met alle benodigde informatie    
     public ChunkEmbedding(String text, List<Double> embedding, int page, Set<String> functionScope) {
-        this(text, embedding, page, functionScope, null, null, null, null, false, false);
+        this(text, embedding, page, functionScope, null, null, null, null, null, false, false);
     }
 
 // Maakt een definitieve chunk met een optionele bronnaam voor Word- of PDF-bijlagen
     public ChunkEmbedding(String text, List<Double> embedding, int page, Set<String> functionScope, String sourceLabel) {
-        this(text, embedding, page, functionScope, sourceLabel, null, null, null, false, false);
+        this(text, embedding, page, functionScope, sourceLabel, null, null, null, null, false, false);
     }
 
     public ChunkEmbedding(String text, List<Double> embedding, int page, Set<String> functionScope, String sourceLabel, boolean sourceIsPdf) {
-        this(text, embedding, page, functionScope, sourceLabel, null, null, null, sourceIsPdf, false);
+        this(text, embedding, page, functionScope, sourceLabel, null, null, null, null, sourceIsPdf, false);
     }
 
     public ChunkEmbedding(String text,
@@ -57,7 +58,7 @@ public class ChunkEmbedding {
                           String sourceName,
                           String sourcePath,
                           boolean sourceIsPdf) {
-        this(text, embedding, page, functionScope, sourceLabel, sourceUrl, sourceName, sourcePath, sourceIsPdf, false);
+        this(text, embedding, page, functionScope, sourceLabel, sourceUrl, sourceName, sourcePath, null, sourceIsPdf, false);
     }
 
     public ChunkEmbedding(String text,
@@ -70,6 +71,33 @@ public class ChunkEmbedding {
                           String sourcePath,
                           boolean sourceIsPdf,
                           boolean primaryGuide) {
+        this(text, embedding, page, functionScope, sourceLabel, sourceUrl, sourceName, sourcePath, null, sourceIsPdf, primaryGuide);
+    }
+
+    public ChunkEmbedding(String text,
+                          List<Double> embedding,
+                          int page,
+                          Set<String> functionScope,
+                          String sourceLabel,
+                          String sourceUrl,
+                          String sourceName,
+                          String sourcePath,
+                          String sourceTarget,
+                          boolean sourceIsPdf) {
+        this(text, embedding, page, functionScope, sourceLabel, sourceUrl, sourceName, sourcePath, sourceTarget, sourceIsPdf, false);
+    }
+
+    public ChunkEmbedding(String text,
+                          List<Double> embedding,
+                          int page,
+                          Set<String> functionScope,
+                          String sourceLabel,
+                          String sourceUrl,
+                          String sourceName,
+                          String sourcePath,
+                          String sourceTarget,
+                          boolean sourceIsPdf,
+                          boolean primaryGuide) {
         this.text = text;
         this.embedding = embedding;
         this.page = page;
@@ -80,6 +108,7 @@ public class ChunkEmbedding {
         this.sourceUrl = sourceUrl == null || sourceUrl.isBlank() ? null : sourceUrl.trim();
         this.sourceName = sourceName == null || sourceName.isBlank() ? null : sourceName.trim();
         this.sourcePath = sourcePath == null || sourcePath.isBlank() ? null : sourcePath.trim();
+        this.sourceTarget = sourceTarget == null || sourceTarget.isBlank() ? null : sourceTarget.trim();
         this.sourceIsPdf = sourceIsPdf;
         this.primaryGuide = primaryGuide;
     }
@@ -119,6 +148,10 @@ public class ChunkEmbedding {
 
     public String getSourcePath() {
         return sourcePath;
+    }
+
+    public String getSourceTarget() {
+        return sourceTarget;
     }
 
     public boolean isSourcePdf() {

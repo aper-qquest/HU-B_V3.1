@@ -88,6 +88,7 @@ public final class KnowledgeChunkCache {
                     cachedChunk.sourceUrl,
                     cachedChunk.sourceName,
                     cachedChunk.sourcePath,
+                    cachedChunk.sourceTarget,
                     cachedChunk.sourceIsPdf,
                     cachedChunk.primaryGuide));
         }
@@ -122,6 +123,7 @@ public final class KnowledgeChunkCache {
                 cachedChunk.sourceUrl = chunk.getSourceUrl();
                 cachedChunk.sourceName = chunk.getSourceName();
                 cachedChunk.sourcePath = chunk.getSourcePath();
+                cachedChunk.sourceTarget = chunk.getSourceTarget();
                 cachedChunk.sourceIsPdf = chunk.isSourcePdf();
                 cachedChunk.primaryGuide = chunk.isPrimaryGuide();
                 cacheFile.chunks.add(cachedChunk);
@@ -225,6 +227,8 @@ public final class KnowledgeChunkCache {
         private String sourceName;
         @SerializedName("sourcePath")
         private String sourcePath;
+        @SerializedName("sourceTarget")
+        private String sourceTarget;
         @SerializedName("sourceIsPdf")
         private boolean sourceIsPdf;
         @SerializedName("primaryGuide")

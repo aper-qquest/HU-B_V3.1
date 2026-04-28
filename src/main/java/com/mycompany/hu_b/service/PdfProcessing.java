@@ -160,6 +160,7 @@ public class PdfProcessing extends KnowledgeProcessingUtils {
                         null,
                         null,
                         pdfPath.toString(),
+                        buildChunkSourceTarget(pdfPath.toString(), pageNumber, true),
                         true,
                         primaryGuide));
             }
@@ -423,8 +424,24 @@ public class PdfProcessing extends KnowledgeProcessingUtils {
                     null,
                     null,
                     pending.sourcePath,
+                    buildChunkSourceTarget(pending.sourcePath, pending.page, pending.sourceIsPdf),
                     pending.sourceIsPdf,
                     pending.primaryGuide));
+        }
+    }
+
+    private String buildChunkSourceTarget(String sourcePath, int page, boolean sourceIsPdf) {
+        if (sourcePath == null || sourcePath.isBlank()) {
+            return null;
+        }
+        try {
+            String normalized = Path.of(sourcePath).toAbsolutePath().normalize().toUri().toString();
+            if (sourceIsPdf && page > 0) {
+                return normalized + "#page=" + page;
+            }
+            return normalized;
+        } catch (Exception ex) {
+            return null;
         }
     }
 

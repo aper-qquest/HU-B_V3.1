@@ -100,7 +100,20 @@ public class BerichtenTonen {
         bubble.addHyperlinkListener(event -> {
             if (event.getEventType() == javax.swing.event.HyperlinkEvent.EventType.ACTIVATED) {
                 try {
-                    openLink(event.getURL() != null ? event.getURL().toURI() : null);
+                    URI uri = null;
+                    String description = event.getDescription();
+                    java.net.URL eventUrl = event.getURL();
+                    System.out.println("Hyperlink activated: description=" + description
+                            + ", eventURL=" + eventUrl
+                            + ", eventURL fragment=" + (eventUrl == null ? null : eventUrl.getRef()));
+                    if (description != null && description.contains("#page=")) {
+                        uri = new URI(description);
+                    } else if (eventUrl != null) {
+                        uri = eventUrl.toURI();
+                    } else if (description != null) {
+                        uri = new URI(description);
+                    }
+                    openLink(uri);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -300,21 +313,62 @@ public class BerichtenTonen {
             return;
         }
 
+        System.out.println("Opening link: " + uri);
+
         try {
-            if (!Desktop.isDesktopSupported()) {
-                return;
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    desktop.browse(uri);
+                    return;
+                }
+
+                String scheme = uri.getScheme();
+                if (scheme != null && scheme.equalsIgnoreCase("file") && desktop.isSupported(Desktop.Action.OPEN)) {
+                    desktop.open(new File(uri));
+                    return;
+                }
             }
 
-            Desktop desktop = Desktop.getDesktop();
-            String scheme = uri.getScheme();
-            if (scheme != null && scheme.equalsIgnoreCase("file")) {
-                desktop.open(new File(uri));
-            } else {
-                desktop.browse(uri);
+            if (isWindows()) {
+                new ProcessBuilder("cmd", "/c", "start", "\"\"", uri.toString())
+                        .start();
             }
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private void openPdfFileUriWithFragment(URI uri) throws Exception {
+        if (uri == null) {
+            return;
+        }
+
+        String uriText = uri.toString();
+        System.out.println("Opening PDF with fragment: " + uriText);
+
+        if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            Desktop.getDesktop().browse(uri);
+            return;
+        }
+
+        if (isWindows()) {
+            new ProcessBuilder("cmd", "/c", "start", "\"\"", uriText)
+                    .start();
+        }
+    }
+
+    private boolean isWindows() {
+        String os = System.getProperty("os.name", "").toLowerCase();
+        return os.contains("win");
+    }
+
+    private boolean isPdfFileUriWithFragment(URI uri) {
+        if (uri == null || uri.getFragment() == null) {
+            return false;
+        }
+        String path = uri.getPath();
+        return path != null && path.toLowerCase().endsWith(".pdf");
     }
 
     // Geeft de scrollbare container van het chatgedeelte terug.
