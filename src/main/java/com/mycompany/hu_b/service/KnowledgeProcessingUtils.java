@@ -18,13 +18,13 @@ public abstract class KnowledgeProcessingUtils {
     final OpenAI openAIService;
 
     private static final double GUIDE_THRESHOLD = 0.65;             //bepaald wanneer personeelsgids genoeg is en wanneer extra info benodigd is uit externe bron (guide score > guide threshold = pg is genoeg)
-    private static final double MIN_SIMILARITY = 0.15;              //alles wat minder dan x similar is (embedding en woord overlap) wordt weggegooid. lager = meer ruis, hoger = minder resultaten
+    private static final double MIN_SIMILARITY = 0.35;              //alles wat minder dan x similar is (embedding en woord overlap) wordt weggegooid. lager = meer ruis, hoger = minder resultaten
     private static final int MAX_RESULTS = 6;                       //max aantal chunks dat je teruggeeft. laag = weinig context, hoog = meer kans op mix van bronnen
     private static final int MIN_GUIDE_RESULTS = 1;                 //neemt minimaal x personeelsgids chunks mee
     private static final double GUIDE_WEIGHT = 1.1;                 //boost de personeelsgids chunk (deze moet dus iets hoger staan dan external_weight)
     private static final double EXTERNAL_WEIGHT = 1.0;              //boost de externe bron chunk
     private static final double MAX_DUPLICATE_SIMILARITY = 0.97;    //voorkomt dubbele info. te laag zorgt ervoor dat je altijd maar 1 bron krijgt
-    private static final int TARGET_CHUNK_WORDS = 700;
+    private static final int TARGET_CHUNK_WORDS = 300;
     private static final int MAX_CHUNK_WORDS = 800;
 
     protected KnowledgeProcessingUtils(OpenAI openAIService) {
