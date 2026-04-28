@@ -5,6 +5,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -316,18 +318,30 @@ public class BerichtenTonen {
         System.out.println("Opening link: " + uri);
 
         try {
+            if (isPdfFileUriWithFragment(uri)) {
+                System.out.println("Detected PDF fragment URI; routing to PDF fragment handler.");
+                openPdfFileUriWithFragment(uri);
+                return;
+            }
+
             if (Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
                 if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                    System.out.println("Desktop.browse supported; using Desktop.browse for URI.");
                     desktop.browse(uri);
                     return;
                 }
 
                 String scheme = uri.getScheme();
                 if (scheme != null && scheme.equalsIgnoreCase("file") && desktop.isSupported(Desktop.Action.OPEN)) {
+                    System.out.println("Desktop.browse not supported; falling back to Desktop.open for file URI.");
                     desktop.open(new File(uri));
                     return;
                 }
+
+                System.out.println("Desktop is supported but neither BROWSE nor OPEN are available for URI: " + uri);
+            } else {
+                System.out.println("Desktop API is not supported on this platform.");
             }
 
             if (isWindows()) {
@@ -345,17 +359,118 @@ public class BerichtenTonen {
         }
 
         String uriText = uri.toString();
+        String fragment = uri.getFragment();
         System.out.println("Opening PDF with fragment: " + uriText);
+        System.out.println("PDF fragment value: " + fragment);
+
+        if (isWindows() && fragment != null) {
+            Integer page = parsePdfPageFragment(fragment);
+            if (page != null) {
+                Path pdfPath = filePathFromUri(uri);
+                if (pdfPath != null && Files.exists(pdfPath)) {
+                    System.out.println("PDF fragment helper: attempting Acrobat Reader command for page " + page + ".");
+                    if (openPdfInAdobeReader(pdfPath, page)) {
+                        return;
+                    }
+                    System.out.println("PDF fragment helper: Acrobat Reader command failed or was unavailable; falling back.");
+                } else {
+                    System.out.println("PDF fragment helper: could not resolve local PDF path for Acrobat fallback.");
+                }
+            }
+        }
 
         if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+            System.out.println("PDF fragment helper: Desktop.browse is supported; invoking browse().");
             Desktop.getDesktop().browse(uri);
             return;
         }
 
+        System.out.println("PDF fragment helper: Desktop.browse not supported; falling back to Windows start.");
         if (isWindows()) {
             new ProcessBuilder("cmd", "/c", "start", "\"\"", uriText)
                     .start();
         }
+    }
+
+    private Integer parsePdfPageFragment(String fragment) {
+        if (fragment == null || !fragment.startsWith("page=")) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(fragment.substring(fragment.indexOf('=') + 1));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Path filePathFromUri(URI uri) {
+        if (uri == null || uri.getScheme() == null || !uri.getScheme().equalsIgnoreCase("file")) {
+            return null;
+        }
+        try {
+            URI normalized = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), null);
+            Path path = Path.of(normalized);
+            System.out.println("PDF fragment helper: resolved local file path from URI: " + path);
+            return path;
+        } catch (Exception ex) {
+            System.out.println("PDF fragment helper: failed to resolve local file path from URI: " + uri + " -> " + ex.getMessage());
+            return null;
+        }
+    }
+
+    private boolean openPdfInAdobeReader(Path pdfPath, int page) {
+        try {
+            Path acrobat = findAcrobatReaderExecutable();
+            if (acrobat == null) {
+                System.out.println("PDF fragment helper: no Acrobat Reader executable found; skipping Acrobat-specific open.");
+                return false;
+            }
+
+            List<String> command = new ArrayList<>();
+            command.add(acrobat.toString());
+            command.add("/n");
+            command.add("/A");
+            command.add("page=" + page);
+            command.add(pdfPath.toString());
+
+            System.out.println("PDF fragment helper: running Acrobat command: " + command);
+            new ProcessBuilder(command).start();
+            return true;
+        } catch (Exception ex) {
+            System.out.println("PDF fragment helper: Acrobat Reader command failed: " + ex.getMessage());
+            return false;
+        }
+    }
+
+    private Path findAcrobatReaderExecutable() {
+        List<Path> candidates = new ArrayList<>();
+        String programFiles = System.getenv("ProgramFiles");
+        String programFilesX86 = System.getenv("ProgramFiles(x86)");
+
+        if (programFiles != null) {
+            candidates.add(Path.of(programFiles, "Adobe", "Acrobat Reader DC", "Reader", "AcroRd32.exe"));
+            candidates.add(Path.of(programFiles, "Adobe", "Acrobat DC", "Acrobat", "AcroRd32.exe"));
+            candidates.add(Path.of(programFiles, "Adobe", "Acrobat 2020", "Acrobat", "AcroRd32.exe"));
+            candidates.add(Path.of(programFiles, "Adobe", "Acrobat DC", "Acrobat", "Acrobat.exe"));
+            candidates.add(Path.of(programFiles, "Adobe", "Acrobat 2020", "Acrobat", "Acrobat.exe"));
+            candidates.add(Path.of(programFiles, "Adobe", "Acrobat Reader DC", "Reader", "Acrobat.exe"));
+        }
+        if (programFilesX86 != null) {
+            candidates.add(Path.of(programFilesX86, "Adobe", "Acrobat Reader DC", "Reader", "AcroRd32.exe"));
+            candidates.add(Path.of(programFilesX86, "Adobe", "Acrobat DC", "Acrobat", "AcroRd32.exe"));
+            candidates.add(Path.of(programFilesX86, "Adobe", "Acrobat 2020", "Acrobat", "AcroRd32.exe"));
+            candidates.add(Path.of(programFilesX86, "Adobe", "Acrobat DC", "Acrobat", "Acrobat.exe"));
+            candidates.add(Path.of(programFilesX86, "Adobe", "Acrobat 2020", "Acrobat", "Acrobat.exe"));
+            candidates.add(Path.of(programFilesX86, "Adobe", "Acrobat Reader DC", "Reader", "Acrobat.exe"));
+        }
+
+        for (Path candidate : candidates) {
+            if (Files.isRegularFile(candidate)) {
+                System.out.println("PDF fragment helper: found Acrobat Reader executable at " + candidate);
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private boolean isWindows() {
