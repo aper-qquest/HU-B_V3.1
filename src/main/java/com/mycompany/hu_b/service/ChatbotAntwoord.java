@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 // Bouwt het uiteindelijke chatbotantwoord op.
@@ -21,6 +22,8 @@ public class ChatbotAntwoord {
     private static final int MAX_HISTORY_FOR_PROMPT = 20;
     private static final int MAX_PREVIOUS_USER_QUESTIONS = 3;
     private static final int SHORT_FOLLOW_UP_WORD_LIMIT = 8;
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "(?i)\\b[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}\\b");
     private static final Pattern CONTEXT_DEPENDENT_PATTERN = Pattern.compile(
             "\\b(dat|dit|deze|die|daar|daarover|daarvan|ervoor|daarvoor|hierover|hiervan|hiermee|daarmee|zelfde|vorige|eerder|voorgaande|bovenstaande|hierboven|hieronder|hierna)\\b",
             Pattern.CASE_INSENSITIVE);
@@ -33,6 +36,7 @@ public class ChatbotAntwoord {
     private final ChatbotAntwoordVerfijner antwoordVerfijner;
 
     private PendingClarification pendingClarification;
+    private PendingEmailDraft pendingEmailDraft;
 
     public ChatbotAntwoord(PdfProcessing knowledgeService, OpenAI openAIService) {
         this.knowledgeService = knowledgeService;
@@ -48,8 +52,25 @@ public class ChatbotAntwoord {
 
         PendingResolution pendingResolution = resolvePendingClarification(question);
         if (pendingResolution.immediateResponse() != null) {
-            appendConversationTurn(question, pendingResolution.immediateResponse());
-            return pendingResolution.immediateResponse();
+            String immediate = linkifyPlainEmailAddresses(pendingResolution.immediateResponse());
+            appendConversationTurn(question, immediate);
+            return immediate;
+        }
+
+        if (pendingEmailDraft != null) {
+            if (isEmailDraftConfirmation(question)) {
+                String draft = buildEmailDraft(question, pendingEmailDraft);
+                clearPendingEmailDraft();
+                appendConversationTurn(question, draft);
+                return draft;
+            }
+
+            if (isEmailDraftDecline(question)) {
+                String declineResponse = "Prima, dan laat ik het daarbij. Laat het gerust weten als je later toch een conceptmail wilt.";
+                clearPendingEmailDraft();
+                appendConversationTurn(question, declineResponse);
+                return declineResponse;
+            }
         }
 
         String effectiveQuestion = pendingResolution.effectiveQuestion();
@@ -90,6 +111,7 @@ public class ChatbotAntwoord {
         String answer = openAIService.chat(finalSystemPrompt);
         String normalizedAnswer =
                 antwoordVerfijner.normalizeAnswerWithPageReferences(effectiveQuestion, answer, sourceById);
+        normalizedAnswer = addEmailDraftOfferIfNeeded(normalizedAnswer, historyQuestion, effectiveQuestion, rankedChunks, sourceById);
 
         clearPendingClarification();
         appendConversationTurn(historyQuestion, normalizedAnswer);
@@ -242,6 +264,10 @@ public class ChatbotAntwoord {
         pendingClarification = null;
     }
 
+    private void clearPendingEmailDraft() {
+        pendingEmailDraft = null;
+    }
+
     private List<org.json.JSONObject> getRecentConversationHistory(int maxMessages) {
         if (conversationHistory.isEmpty() || maxMessages <= 0) {
             return List.of();
@@ -279,6 +305,127 @@ public class ChatbotAntwoord {
         if (conversationHistory.size() > MAX_HISTORY_MESSAGES) {
             conversationHistory.subList(0, conversationHistory.size() - MAX_HISTORY_MESSAGES).clear();
         }
+    }
+
+    private String addEmailDraftOfferIfNeeded(String answer,
+                                              String userQuestion,
+                                              String effectiveQuestion,
+                                              List<ChunkEmbedding> rankedChunks,
+                                              Map<Integer, ChunkEmbedding> sourceById) {
+        if (answer == null || answer.isBlank()) {
+            return answer;
+        }
+
+        List<String> emailAddresses = extractEmailAddresses(answer);
+        if (emailAddresses.isEmpty()) {
+            return answer;
+        }
+
+        Map<Integer, ChunkEmbedding> draftSourceMap = sourceById == null
+                ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(sourceById);
+        List<ChunkEmbedding> draftChunks = rankedChunks == null ? List.of() : new ArrayList<>(rankedChunks);
+        pendingEmailDraft = new PendingEmailDraft(
+                userQuestion,
+                effectiveQuestion,
+                answer,
+                emailAddresses,
+                draftChunks,
+                draftSourceMap
+        );
+
+        String offerText = emailAddresses.size() == 1
+                ? "Wil je dat ik een e-mail opstel voor dit adres?"
+                : "Wil je dat ik een e-mail opstel voor deze adressen?";
+
+        return answer + "\n\n" + offerText;
+    }
+
+    private List<String> extractEmailAddresses(String text) {
+        List<String> addresses = new ArrayList<>();
+        if (text == null || text.isBlank()) {
+            return addresses;
+        }
+
+        Matcher matcher = EMAIL_PATTERN.matcher(text);
+        while (matcher.find()) {
+            String email = matcher.group().trim();
+            if (!addresses.contains(email)) {
+                addresses.add(email);
+            }
+        }
+
+        return addresses;
+    }
+
+    private boolean isEmailDraftConfirmation(String question) {
+        if (question == null) {
+            return false;
+        }
+
+        String normalized = question.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isBlank() || normalized.length() > 120 || normalized.contains("@")) {
+            return false;
+        }
+
+        return normalized.matches(".*\\b(ja|jazeker|zeker|graag|prima|ok|oke|oké|doe maar|ja graag).*");
+    }
+
+    private boolean isEmailDraftDecline(String question) {
+        if (question == null) {
+            return false;
+        }
+
+        String normalized = question.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isBlank() || normalized.length() > 120) {
+            return false;
+        }
+
+        return normalized.matches(".*\\b(nee|nee dank je|niet nodig|liever niet|hoeft niet|geen mail|geen e-mail).*");
+    }
+
+    private String buildEmailDraft(String userConfirmation, PendingEmailDraft emailDraft) throws Exception {
+        Map<Integer, ChunkEmbedding> sourceMap = emailDraft.sourceById() == null
+                ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(emailDraft.sourceById());
+        String contextString = promptBuilder.buildContextText(
+                emailDraft.contextChunks() == null ? List.of() : emailDraft.contextChunks(),
+                sourceMap
+        );
+        String conversationHistoryText =
+                promptBuilder.buildConversationHistoryText(getRecentConversationHistory(MAX_HISTORY_FOR_PROMPT));
+        String prompt = promptBuilder.buildEmailDraftPrompt(
+                emailDraft.originalQuestion(),
+                emailDraft.effectiveQuestion(),
+                emailDraft.originalAnswer(),
+                userConfirmation,
+                emailDraft.emailAddresses(),
+                contextString,
+                conversationHistoryText
+        );
+
+        String draft = openAIService.chat(prompt);
+        if (draft == null || draft.isBlank()) {
+            return "Ik kon geen e-mailconcept genereren op basis van de beschikbare informatie.";
+        }
+
+        return linkifyPlainEmailAddresses(draft.trim());
+    }
+
+    private String linkifyPlainEmailAddresses(String text) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+
+        Matcher matcher = EMAIL_PATTERN.matcher(text);
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            String email = matcher.group();
+            String replacement = "<a href=\"mailto:" + email + "\">" + email + "</a>";
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+        return result.toString();
     }
 
     // Geeft zichtbaar weer welke chunks in de laatste prompt zitten.
@@ -367,5 +514,13 @@ public class ChatbotAntwoord {
     }
 
     private record ClarificationRequest(String message) {
+    }
+
+    private record PendingEmailDraft(String originalQuestion,
+                                     String effectiveQuestion,
+                                     String originalAnswer,
+                                     List<String> emailAddresses,
+                                     List<ChunkEmbedding> contextChunks,
+                                     Map<Integer, ChunkEmbedding> sourceById) {
     }
 }
