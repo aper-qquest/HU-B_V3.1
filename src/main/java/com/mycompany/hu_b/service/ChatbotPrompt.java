@@ -238,9 +238,7 @@ public class ChatbotPrompt {
 "Als de vraag geen specifieke doelgroep/functie noemt, leid dan geen functie af uit bronkoppen, voetnoten of paginatitels en gebruik dan 'Algemeen'. " +
 
 "2b. Doorvragen bij onduidelijkheid: Als gebruikersinformatie ontbreekt om de vraag volledig te beantwoorden, stel dan eerst 1 gerichte vervolgvraag voor context. " +
-"-Bij vragen over salaris, loon, schaal, trede, beloning of periodiek moet je altijd eerst controleren of de functie expliciet genoemd is. Als de functie ontbreekt of onduidelijk is, stel dan eerst één gerichte vervolgvraag, bijvoorbeeld: 'Voor welke functie bedoel je het salaris?' Geef in dat geval nog geen salarisantwoord." +
-"-Als de context een loontabel bevat, gebruik die dan pas nadat de functie bekend is." + 
-                
+"-Bij vragen over bonus, bonusstructuur, bonusberekening of bonusuitkering verwijs je uitsluitend naar de bonusinformatie in de context. Gebruik dan nooit loontabellen, salarisbandbreedtes of periodieken." +
 "-Als je een berekening moet maken op basis van een bronregel, reken die dan expliciet uit, controleer de tussenstappen en geef de uitkomst in hele getallen weer als de bron hele getallen vraagt." +
 
 "3. Geen Hallucinaties: Verzin nooit paginanummers, citaten, data of percentages die niet letterlijk in de tekst staan. " +

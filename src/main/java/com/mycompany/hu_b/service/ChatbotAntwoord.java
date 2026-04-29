@@ -22,6 +22,7 @@ public class ChatbotAntwoord {
     private static final int MAX_HISTORY_FOR_PROMPT = 20;
     private static final int MAX_PREVIOUS_USER_QUESTIONS = 3;
     private static final int SHORT_FOLLOW_UP_WORD_LIMIT = 8;
+    private static final int TALENTCLASS_CONSULTANT_PAYROLL_PAGE = 8;
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "(?i)\\b[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}\\b");
     private static final Pattern CONTEXT_DEPENDENT_PATTERN = Pattern.compile(
@@ -405,13 +406,19 @@ public class ChatbotAntwoord {
         }
 
         Set<String> questionFunctions = knowledgeService.detectFunctionLabels(question);
+        if (questionFunctions == null || questionFunctions.isEmpty()) {
+            return Optional.empty();
+        }
+
         ChunkEmbedding payrollChunk = findRelevantPayrollChunk(rankedChunks, questionFunctions);
 
         if (payrollChunk == null) {
             return Optional.of("Ik kan de loontabelbron niet direct vinden. Controleer de bron of geef de functie iets specifieker op.");
         }
 
-        String sourceReference = antwoordVerfijner.formatSourceReferenceForDisplay(payrollChunk);
+        String sourceReference = questionFunctions.contains("Talentclass Consultant")
+                ? antwoordVerfijner.formatSourceReferenceForPage(payrollChunk, TALENTCLASS_CONSULTANT_PAYROLL_PAGE)
+                : antwoordVerfijner.formatSourceReferenceForDisplay(payrollChunk);
 
         return Optional.of(
                 "Klik op de bronlink hieronder om de loontabel te openen.\n"
@@ -573,41 +580,20 @@ public class ChatbotAntwoord {
         }
 
         String normalized = query.toLowerCase(Locale.ROOT);
-        boolean earningQuestion = normalized.matches(".*\\b(verdien|verdient|verdienen|betaal|betaalt|betalen|krijg|krijgt|krijgen)\\b.*")
-                || normalized.matches(".*\\b(wat|hoeveel)\\s+(verdien|verdient|verdienen|krijg|krijgt|krijgen)\\b.*")
+        if (normalized.contains("bonus")) {
+            return false;
+        }
+
+        Set<String> questionFunctions = knowledgeService.detectFunctionLabels(query);
+        boolean earningQuestion = normalized.matches(".*\\b(verdien|verdient|verdienen|betaal|betaalt|betalen)\\b.*")
+                || normalized.matches(".*\\b(wat|hoeveel)\\s+(verdien|verdient|verdienen)\\b.*")
                 || normalized.contains("wat verdient")
                 || normalized.contains("hoeveel verdient")
                 || normalized.contains("salaris van")
                 || normalized.contains("loon van")
-                || normalized.contains("beloning van")
                 || normalized.contains("inkomen van");
 
-        return normalized.contains("salaris")
-                || normalized.contains("loon")
-                || normalized.contains("loonstrook")
-                || normalized.contains("uurloon")
-                || normalized.contains("maandsalaris")
-                || normalized.contains("jaarsalaris")
-                || normalized.contains("brutosalaris")
-                || normalized.contains("nettosalaris")
-                || normalized.contains("salarisschaal")
-                || normalized.contains("functieschaal")
-                || normalized.contains("schaal")
-                || normalized.contains("trede")
-                || normalized.contains("periodiek")
-                || normalized.contains("inschaling")
-                || normalized.contains("beloning")
-                || normalized.contains("uitbetaling")
-                || normalized.contains("toeslag")
-                || normalized.contains("vakantietoeslag")
-                || normalized.contains("vakantiegeld")
-                || normalized.contains("eindejaarsuitkering")
-                || normalized.contains("bonus")
-                || normalized.contains("bruto")
-                || normalized.contains("netto")
-                || normalized.contains("declaratie")
-                || normalized.contains("inhouding")
-                || earningQuestion;
+        return earningQuestion && questionFunctions != null && !questionFunctions.isEmpty();
     }
 
     public int getMaxHistoryMessages() {
