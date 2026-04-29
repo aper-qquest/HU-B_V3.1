@@ -239,6 +239,8 @@ public class ChatbotPrompt {
 
 "2b. Doorvragen bij onduidelijkheid: Als gebruikersinformatie ontbreekt om de vraag volledig te beantwoorden, stel dan eerst 1 gerichte vervolgvraag voor context. " +
 "-Bij vragen over bonus, bonusstructuur, bonusberekening of bonusuitkering verwijs je uitsluitend naar de bonusinformatie in de context. Gebruik dan nooit loontabellen, salarisbandbreedtes of periodieken." +
+"-Bij vragen over vakantieverlofdagen met een pro-rata berekening (bijvoorbeeld bij start in een maand): reken de opbouw expliciet uit vanaf de startmaand tot en met december, deel door 12, en rond de uitkomst af op hele dagen. " +
+"Gebruik daarbij alleen de cijfers uit de context, dus niet de gesprekshistorie." +
 "-Als je een berekening moet maken op basis van een bronregel, reken die dan expliciet uit, controleer de tussenstappen en geef de uitkomst in hele getallen weer als de bron hele getallen vraagt." +
 
 "3. Geen Hallucinaties: Verzin nooit paginanummers, citaten, data of percentages die niet letterlijk in de tekst staan. " +

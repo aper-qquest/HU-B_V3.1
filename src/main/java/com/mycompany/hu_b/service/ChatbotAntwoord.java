@@ -28,6 +28,12 @@ public class ChatbotAntwoord {
     private static final Pattern CONTEXT_DEPENDENT_PATTERN = Pattern.compile(
             "\\b(dat|dit|deze|die|daar|daarover|daarvan|ervoor|daarvoor|hierover|hiervan|hiermee|daarmee|zelfde|vorige|eerder|voorgaande|bovenstaande|hierboven|hieronder|hierna)\\b",
             Pattern.CASE_INSENSITIVE);
+    private static final Pattern BONUS_TOPIC_PATTERN = Pattern.compile(
+            "\\b(bonus|bonussen|quadrimester|quadrimesters|uitkering)\\b",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern VACATION_TOPIC_PATTERN = Pattern.compile(
+            "\\b(vakantie|vakantiedag|vakantieverlof|verlofdagen|vrije dag)\\b",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern MONTH_PATTERN = Pattern.compile(
             "\\b(?:in|vanaf|per|begin(?:nen)?\\s+(?:in|op)?|start(?:en)?\\s+(?:in|op)?)\\s+"
                     + "(januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december|"
@@ -45,6 +51,7 @@ public class ChatbotAntwoord {
 
     private PendingClarification pendingClarification;
     private PendingEmailDraft pendingEmailDraft;
+    private Topic lastExplicitTopic = Topic.UNKNOWN;
 
     public ChatbotAntwoord(PdfProcessing knowledgeService, OpenAI openAIService) {
         this.knowledgeService = knowledgeService;
@@ -57,6 +64,8 @@ public class ChatbotAntwoord {
         if (question == null || question.isBlank()) {
             return "Ik help je graag. Kun je je vraag iets concreter formuleren?";
         }
+
+        registerExplicitTopic(question);
 
         PendingResolution pendingResolution = resolvePendingClarification(question);
         if (pendingResolution.immediateResponse() != null) {
@@ -84,7 +93,7 @@ public class ChatbotAntwoord {
         String effectiveQuestion = pendingResolution.effectiveQuestion();
         String historyQuestion = pendingResolution.historyQuestion();
 
-        String searchQuery = effectiveQuestion;
+        String searchQuery = buildSearchQueryWithMemory(effectiveQuestion);
         String llmQuestion = buildQuestionWithMemory(effectiveQuestion);
 
         SearchResult searchResult = knowledgeService.search(searchQuery);
@@ -107,6 +116,14 @@ public class ChatbotAntwoord {
         Optional<String> salaryRedirectAnswer = buildSalaryRedirectAnswer(effectiveQuestion, rankedChunks);
         if (salaryRedirectAnswer.isPresent()) {
             String answer = salaryRedirectAnswer.get();
+            clearPendingClarification();
+            appendConversationTurn(historyQuestion, answer);
+            return answer;
+        }
+
+        Optional<String> vacationProrataAnswer = buildVacationProrataAnswer(effectiveQuestion, rankedChunks);
+        if (vacationProrataAnswer.isPresent()) {
+            String answer = vacationProrataAnswer.get();
             clearPendingClarification();
             appendConversationTurn(historyQuestion, answer);
             return answer;
@@ -142,8 +159,12 @@ public class ChatbotAntwoord {
         }
 
         String enrichedQuestion = question;
+        Topic followUpTopic = resolveFollowUpTopic(question);
         if (isContextDependentQuestion(question)) {
-            List<String> recentQuestions = getRecentUserQuestions(MAX_PREVIOUS_USER_QUESTIONS);
+            List<String> recentQuestions = getRecentUserQuestionsForTopic(MAX_PREVIOUS_USER_QUESTIONS, followUpTopic);
+            if (recentQuestions.isEmpty()) {
+                recentQuestions = getRecentUserQuestions(MAX_PREVIOUS_USER_QUESTIONS);
+            }
             if (!recentQuestions.isEmpty()) {
                 StringBuilder contextualQuestion = new StringBuilder();
                 contextualQuestion.append("Eerdere relevante vragen:\n");
@@ -156,6 +177,33 @@ public class ChatbotAntwoord {
         }
 
         return enrichedQuestion;
+    }
+
+    // Verrijkt de zoekquery alleen met het meest waarschijnlijke onderwerp uit de context.
+    // Hierdoor blijven korte vervolgvragen zoals "en als ik in september start?" op het juiste thema.
+    private String buildSearchQueryWithMemory(String question) {
+        if (question == null || question.isBlank()) {
+            return question;
+        }
+
+        String enrichedQuery = question.trim();
+        Topic questionTopic = extractExplicitTopic(enrichedQuery);
+        if (questionTopic != Topic.UNKNOWN) {
+            return enrichedQuery;
+        }
+
+        if (!isContextDependentQuestion(question)) {
+            return enrichedQuery;
+        }
+
+        switch (resolveFollowUpTopic(question)) {
+            case BONUS -> enrichedQuery += " bonus bonusberekening quadrimester";
+            case VACATION -> enrichedQuery += " vakantieverlof vakantieverlofdagen naar rato";
+            default -> {
+            }
+        }
+
+        return enrichedQuery;
     }
 
     private ClarificationRequest determineClarificationRequest(String effectiveQuestion,
@@ -307,6 +355,31 @@ public class ChatbotAntwoord {
 
             String content = message.optString("content", "").trim();
             if (!content.isEmpty()) {
+                questions.add(0, content);
+            }
+        }
+
+        return questions;
+    }
+
+    private List<String> getRecentUserQuestionsForTopic(int maxQuestions, Topic topic) {
+        List<String> questions = new ArrayList<>();
+        if (maxQuestions <= 0 || topic == null || topic == Topic.UNKNOWN) {
+            return questions;
+        }
+
+        for (int i = conversationHistory.size() - 1; i >= 0 && questions.size() < maxQuestions; i--) {
+            org.json.JSONObject message = conversationHistory.get(i);
+            if (message == null || !"user".equalsIgnoreCase(message.optString("role"))) {
+                continue;
+            }
+
+            String content = message.optString("content", "").trim();
+            if (content.isEmpty()) {
+                continue;
+            }
+
+            if (extractExplicitTopic(content) == topic) {
                 questions.add(0, content);
             }
         }
@@ -470,6 +543,187 @@ public class ChatbotAntwoord {
         return chunk.getText().trim().toUpperCase(Locale.ROOT).startsWith("LOONTABEL");
     }
 
+    private Optional<String> buildVacationProrataAnswer(String question, List<ChunkEmbedding> rankedChunks) {
+        if (question == null || question.isBlank()) {
+            return Optional.empty();
+        }
+
+        String normalized = question.toLowerCase(Locale.ROOT);
+        if (resolveFollowUpTopic(question) == Topic.BONUS) {
+            return Optional.empty();
+        }
+
+        boolean vacationQuestion = normalized.contains("vakantie")
+                || normalized.contains("vakantiedag")
+                || normalized.contains("vakantieverlof")
+                || normalized.contains("vrije dag")
+                || normalized.contains("verlofdagen");
+        if (!vacationQuestion) {
+            return Optional.empty();
+        }
+
+        Matcher monthMatcher = MONTH_PATTERN.matcher(normalized);
+        String monthName = null;
+        while (monthMatcher.find()) {
+            monthName = monthMatcher.group(1);
+        }
+
+        if (monthName == null) {
+            return Optional.empty();
+        }
+
+        Integer monthNumber = monthNameToNumber(monthName);
+        if (monthNumber == null) {
+            return Optional.empty();
+        }
+
+        int monthsInServiceThisYear = 13 - monthNumber;
+        int totalDays = (int) Math.round((26.0 * monthsInServiceThisYear) / 12.0);
+        int statutoryDays = (int) Math.round((20.0 * monthsInServiceThisYear) / 12.0);
+        int extraDays = Math.max(0, totalDays - statutoryDays);
+
+        ChunkEmbedding sourceChunk = findVacationDaysChunk(rankedChunks);
+        String bron = sourceChunk == null
+                ? "N.v.t."
+                : antwoordVerfijner.formatSourceReferenceForDisplay(sourceChunk);
+
+        String monthLabel = capitalizeMonth(monthName);
+        return Optional.of(
+                "Functie: Algemeen\n"
+                + "Antwoord: Als je in " + monthLabel + " begint, krijg je naar rato recht op "
+                + totalDays + " van de 26 vakantieverlofdagen. "
+                + "Dat is berekend op basis van " + monthsInServiceThisYear + "/12 van het jaar, afgerond op hele dagen. "
+                + "Daarvan zijn " + statutoryDays + " wettelijke en " + extraDays + " bovenwettelijke dagen.\n"
+                + "Bron: " + bron
+        );
+    }
+
+    private Integer monthNameToNumber(String monthName) {
+        if (monthName == null || monthName.isBlank()) {
+            return null;
+        }
+
+        return switch (monthName.toLowerCase(Locale.ROOT)) {
+            case "januari", "jan" -> 1;
+            case "februari", "feb" -> 2;
+            case "maart", "mrt" -> 3;
+            case "april", "apr" -> 4;
+            case "mei" -> 5;
+            case "juni", "jun" -> 6;
+            case "juli", "jul" -> 7;
+            case "augustus", "aug" -> 8;
+            case "september", "sep", "sept" -> 9;
+            case "oktober", "okt" -> 10;
+            case "november", "nov" -> 11;
+            case "december", "dec" -> 12;
+            default -> null;
+        };
+    }
+
+    private String capitalizeMonth(String monthName) {
+        if (monthName == null || monthName.isBlank()) {
+            return "";
+        }
+
+        String normalized = monthName.trim().toLowerCase(Locale.ROOT);
+        return normalized.substring(0, 1).toUpperCase(Locale.ROOT) + normalized.substring(1);
+    }
+
+    private ChunkEmbedding findVacationDaysChunk(List<ChunkEmbedding> rankedChunks) {
+        ChunkEmbedding exactMatch = findVacationDaysChunkInList(rankedChunks, true);
+        if (exactMatch != null) {
+            return exactMatch;
+        }
+
+        ChunkEmbedding looseMatch = findVacationDaysChunkInList(rankedChunks, false);
+        if (looseMatch != null) {
+            return looseMatch;
+        }
+
+        List<ChunkEmbedding> allChunks = knowledgeService == null ? List.of() : knowledgeService.getChunks();
+        exactMatch = findVacationDaysChunkInList(allChunks, true);
+        if (exactMatch != null) {
+            return exactMatch;
+        }
+
+        return findVacationDaysChunkInList(allChunks, false);
+    }
+
+    private ChunkEmbedding findVacationDaysChunkInList(List<ChunkEmbedding> chunks, boolean exactPhrase) {
+        if (chunks == null || chunks.isEmpty()) {
+            return null;
+        }
+
+        for (ChunkEmbedding chunk : chunks) {
+            if (chunk == null || chunk.getText() == null) {
+                continue;
+            }
+
+            String text = chunk.getText().toLowerCase(Locale.ROOT);
+            boolean exactMatch = text.contains("26 vakantieverlofdagen")
+                    && text.contains("naar rato")
+                    && text.contains("40-urige werkweek");
+            boolean looseMatch = text.contains("vakantieverlofdagen") && text.contains("naar rato");
+            if ((exactPhrase && exactMatch) || (!exactPhrase && looseMatch)) {
+                return chunk;
+            }
+        }
+
+        return null;
+    }
+
+    private Topic resolveFollowUpTopic(String question) {
+        Topic explicitTopic = extractExplicitTopic(question);
+        if (explicitTopic != Topic.UNKNOWN) {
+            return explicitTopic;
+        }
+
+        if (lastExplicitTopic != Topic.UNKNOWN) {
+            return lastExplicitTopic;
+        }
+
+        return inferTopicFromRecentUserQuestions();
+    }
+
+    private Topic inferTopicFromRecentUserQuestions() {
+        for (int i = conversationHistory.size() - 1; i >= 0 && i >= conversationHistory.size() - 8; i--) {
+            org.json.JSONObject message = conversationHistory.get(i);
+            if (message == null || !"user".equalsIgnoreCase(message.optString("role"))) {
+                continue;
+            }
+
+            Topic topic = extractExplicitTopic(message.optString("content", ""));
+            if (topic != Topic.UNKNOWN) {
+                return topic;
+            }
+        }
+
+        return Topic.UNKNOWN;
+    }
+
+    private Topic extractExplicitTopic(String question) {
+        if (question == null || question.isBlank()) {
+            return Topic.UNKNOWN;
+        }
+
+        String normalized = question.toLowerCase(Locale.ROOT);
+        if (BONUS_TOPIC_PATTERN.matcher(normalized).find()) {
+            return Topic.BONUS;
+        }
+        if (VACATION_TOPIC_PATTERN.matcher(normalized).find()) {
+            return Topic.VACATION;
+        }
+
+        return Topic.UNKNOWN;
+    }
+
+    private void registerExplicitTopic(String question) {
+        Topic explicitTopic = extractExplicitTopic(question);
+        if (explicitTopic != Topic.UNKNOWN) {
+            lastExplicitTopic = explicitTopic;
+        }
+    }
+
     private String buildEmailDraft(String userConfirmation, PendingEmailDraft emailDraft) throws Exception {
         Map<Integer, ChunkEmbedding> sourceMap = emailDraft.sourceById() == null
                 ? new LinkedHashMap<>()
@@ -607,6 +861,12 @@ public class ChatbotAntwoord {
     }
 
     private record ClarificationRequest(String message) {
+    }
+
+    private enum Topic {
+        BONUS,
+        VACATION,
+        UNKNOWN
     }
 
     private record PendingEmailDraft(String originalQuestion,
