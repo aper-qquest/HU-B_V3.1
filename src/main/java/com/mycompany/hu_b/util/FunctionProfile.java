@@ -19,7 +19,7 @@ public class FunctionProfile {
     private static Map<String, List<String>> createFunctionProfiles() {
         Map<String, List<String>> profiles = new LinkedHashMap<>();
         profiles.put("Talentclass Consultant", Arrays.asList(
-                "talentclass", "talent class", "tc consultant", "tc-consultant", "tc consultants"
+                "talentclass", "talent class", "tc consultant", "tc-consultant", "tc consultants", "tcer", "tc-er", "tc lid"
         ));
         profiles.put("Accountmanager", Arrays.asList(
                 "accountmanager"
