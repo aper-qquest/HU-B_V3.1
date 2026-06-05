@@ -10,11 +10,13 @@ Installatie
 7. Run de code en de chatbot verschijnt in een apart venster.
 
 Gebruik
+
 De gebruiker stelt een vraag. HU-B beantwoord deze vraag. 
 Als de informatie in de personeelsgids of gelinkte documenten staat geeft hij inhoudelijk antwoord. 
 Bij onvoldoende informatie geeft hij de gebruiker een advies met vervolgstappen om toch antwoord op diens vraag te kunnen krijgen. 
 
 Functionaliteiten
+
 HU-B gebruikt hiervoor de volgende functionaliteiten:
 HU-B heeft een 'context window' van waaruit hij, binnen (niet tussen) sessies gegeven informatie, meeneemt voor het formuleren van een gericht antwoord.
 HU-B vraagt zelf door naar meer context en geeft het ook aan wanneer hij onvoldoende informatie heeft voor het beantwoorden van de vraag.
@@ -22,6 +24,7 @@ HU-B kan vragen met typfouten alsnog interpreteren.
 HU-B kan de gebruiker helpen een email op te stellen naar een leidinggevende.
 
 Bron updates
+
 HU-B laadt de personeelsgids en alle externe bronnen bij de eerste keer opstarten in. De chatbot doet er dan 2-3 minuten over om op te starten. 
 Daarna zal hij binnen enkele seconden opstarten. Er is een update knop die voor iedereen toegankelijk is. 
 Wanneer deze wordt aangeklikt worden alle documenten opnieuw ingeladen en is de informatie die de chatbot voor zijn antwoorden gebruikt weer up to date. 
