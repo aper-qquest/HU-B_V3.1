@@ -1,6 +1,7 @@
 package com.mycompany.hu_b.controller;
 
 import com.mycompany.hu_b.service.ChatbotAntwoord;
+import com.mycompany.hu_b.service.PdfProcessing;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -22,9 +23,11 @@ public class chatAPIController {
 
     // Service die gebruikersvragen verwerkt.
     private final ChatbotAntwoord chatbot;
+    private final PdfProcessing knowledgeService;
 
-    public chatAPIController(ChatbotAntwoord chatbot) {
+    public chatAPIController(ChatbotAntwoord chatbot, PdfProcessing knowledgeService) {
         this.chatbot = chatbot;
+        this.knowledgeService = knowledgeService;
     }
 
     // Testendpoint om te controleren of de API bereikbaar is.
@@ -33,9 +36,16 @@ public class chatAPIController {
         return "Chat API werkt";
     }
 
+    @GetMapping("/api/getChunks")
+    public String chunks() {
+        return "Aantal chunks: " + knowledgeService.getChunks().size();
+    }
+
     // Ontvangt een gebruikersvraag en retourneert het chatbotantwoord.
     @PostMapping
     public String chat(@RequestBody String question) throws Exception {
         return chatbot.ask(question);
     }
+
+
 }

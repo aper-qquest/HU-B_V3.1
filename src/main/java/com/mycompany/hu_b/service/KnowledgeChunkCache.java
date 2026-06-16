@@ -17,8 +17,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.stereotype.Service;
+
 // Beheert een eenvoudige lokale JSON-cache met alle chunks en embeddings.
 // Hiermee hoeft de app bij een gewone opstart niet opnieuw alle bronbestanden te lezen.
+@Service
 public final class KnowledgeChunkCache {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

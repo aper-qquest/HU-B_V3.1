@@ -1,10 +1,17 @@
 package com.mycompany.hu_b;
 
+import com.mycompany.hu_b.service.PdfProcessing;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TestController {
+
+    private final PdfProcessing knowledgeService;
+
+    public TestController(PdfProcessing knowledgeService) {
+        this.knowledgeService = knowledgeService;
+    }
 
     @GetMapping("/")
     public String home() {
@@ -16,8 +23,8 @@ public class TestController {
         return "Backend werkt";
     }
 
-    // @GetMapping("/api/chat")
-    // public String chat() {
-    //     return "Chat API werkt";
-    // }
+    @GetMapping("/api/getChunks")
+    public String chunks() {
+        return "Aantal chunks: " + knowledgeService.getChunks().size();
+    }
 }
