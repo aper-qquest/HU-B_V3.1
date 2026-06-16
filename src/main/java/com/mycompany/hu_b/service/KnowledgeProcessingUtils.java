@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.springframework.stereotype.Service;
+
+@Service
 public abstract class KnowledgeProcessingUtils {
 
     final List<ChunkEmbedding> chunks = new ArrayList<>();

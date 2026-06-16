@@ -10,4 +10,14 @@ public class TestController {
     public String home() {
         return "Spring Boot werkt!";
     }
+
+    @GetMapping("/api/test")
+    public String test() {
+        return "Backend werkt";
+    }
+
+    // @GetMapping("/api/chat")
+    // public String chat() {
+    //     return "Chat API werkt";
+    // }
 }

@@ -15,12 +15,14 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.stereotype.Service;
 
 // Verzorgt alle communicatie met de OpenAI API.
 // De class controleert of de API-key aanwezig is,
 // maakt embeddings van tekst voor semantic search
 // en stuurt prompts naar het chatmodel om antwoorden te laten genereren.
 
+@Service
 public class OpenAI {
 
 // API-key wordt opgehaald

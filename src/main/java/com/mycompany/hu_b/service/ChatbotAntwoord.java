@@ -13,9 +13,13 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.stereotype.Service;
+
 // Bouwt het uiteindelijke chatbotantwoord op.
 // Deze variant gebruikt een kleine conversatiestatus zodat verduidelijkingsvragen
 // niet verloren gaan tussen twee user messages.
+
+@Service
 public class ChatbotAntwoord {
 
     private static final int MAX_HISTORY_MESSAGES = 20;
