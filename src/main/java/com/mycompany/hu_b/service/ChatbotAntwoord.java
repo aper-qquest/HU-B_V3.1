@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 // Deze variant gebruikt een kleine conversatiestatus zodat verduidelijkingsvragen
 // niet verloren gaan tussen twee user messages.
 
+// Service die chatbotvragen verwerkt en antwoorden genereert.
 @Service
 public class ChatbotAntwoord {
 

@@ -23,6 +23,7 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 
+// Service voor het verwerken en doorzoeken van kennisbronnen.
 @Service
 public class PdfProcessing extends KnowledgeProcessingUtils {
 

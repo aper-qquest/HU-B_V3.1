@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 // maakt embeddings van tekst voor semantic search
 // en stuurt prompts naar het chatmodel om antwoorden te laten genereren.
 
+// Service voor communicatie met de OpenAI API.
 @Service
 public class OpenAI {
 
