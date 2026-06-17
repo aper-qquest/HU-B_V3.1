@@ -1,7 +1,8 @@
+/*
 .conversation {
   width: 450px;
   padding: 1em;
-  margin-left: 140px; /* this should be done with better positioning later */
+  margin-left: 140px; 
   
   .message-group {
     &:not(:last-child) {
@@ -53,7 +54,7 @@
     }
   }
 }
-
+*/
 
 .qquestLogo {
   width: 182px;
@@ -82,12 +83,67 @@
 }
 
 #chat {
-    height: 400px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &:not(:last-child) {
+    margin-bottom: 1.0em;
+  }
+
+  .message {
+    margin: 0;
+    border-radius: 15px;
+    margin-bottom:  4px;
+    padding:        7px;
+    
+    width: max-content;
+    max-width: 80%;
+    box-sizing: border-box;
+
+    text-wrap: balance;
+
+    font-family: 'Gotham Light';
+    font-size: 16px;
+
+  }
+  .message.opening {
+    background-color: #091E38;
+    border: 2px solid #37C1F1;
+    
+    border-bottom-left-radius: 0;
+    justify-content: flex-start;
+    
+  }
+
+  .message.question {
+    background-color: #37C1F1;
+    border: 2px solid #FFF;
+
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+    justify-content: flex-end;
+  }
+    
+  .message.answer {
+    background-color: #091E38;
+    border: 2px solid #37C1F1;
+      
+    border-bottom-left-radius: 0;
+    justify-content: flex-start;
+  }
+
+  .avatar {
+    width: 20px;
+    height: 15px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
 }
+
+
 
 #input {
     height: 40px;
