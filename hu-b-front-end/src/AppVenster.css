@@ -1,0 +1,40 @@
+.qquestLogo {
+    width: 182px;
+    height: 62px;
+}
+
+#header {
+    text-align: left;
+}
+
+.topBanner {
+    height: 40px;
+}
+
+#chat {
+    height: 400px;
+}
+
+#input {
+    height: 40px;
+}
+
+
+/* 
+Refereer verder naar index.css voor basis variabelen (kleuren, maybe fonts etc)
+next: 
+.hubLogo -> needs specific sizing for hu-b's logo in app
+
+.hubIcon -> if hu-b profile picture is a different size than the logo
+
+#header -> formaat, positie & font size enzo van banner bovenin, met daarin Qquest logo, Hu-B Logo (?) en 'update bronnen' knop
+
+.chat -> formaat, positie & font size enzo van onderdelen chatgesprek. HU-B icon, vraag tekst na submit, antwoord tekst van HU-B
+
+.input -> formaat, positie & font size enzo van banner onderin, met input window & 'verstuur' knop
+
+.closePopUp -> formaat, positie & font size enzo popup knop die opkomt bij sluiten chatbot
+
+(en alles wat ik nu vergeet)
+
+*/
