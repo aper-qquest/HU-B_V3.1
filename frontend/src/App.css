@@ -1,3 +1,115 @@
+.conversation {
+  width: 450px;
+  padding: 1em;
+  margin-left: 140px; /* this should be done with better positioning later */
+  
+  .message-group {
+    &:not(:last-child) {
+      margin-bottom: 1.5em;
+    }
+    
+    blockquote {
+      border: 2px solid #37C1F1;
+      background: #000000;
+      
+      margin: 0;
+      border-radius: 15px;
+      margin-bottom:  4px;
+      padding:        7px;
+      
+      width: max-content;
+      max-width: 80%;
+      box-sizing: border-box;
+      
+      text-wrap: balance;
+    }
+    
+    &:not([data-sender="User"]) {
+      blockquote:has(+ cite) {
+        border-bottom-left-radius: 0;
+      }
+      cite {
+        display: block;
+        text-align: left;
+      }
+    }
+    
+    &[data-sender="User"] {
+      blockquote {
+        border: 2px solid grey;
+        background: #000000;
+        
+        margin-left: auto;
+      }
+      
+      blockquote:has(+ cite) {
+        border-bottom-right-radius: 0;
+      }
+      
+      cite {
+        display: block;
+        text-align: right;
+      }
+    }
+  }
+}
+
+
+.qquestLogo {
+  width: 182px;
+  height: 62px;
+  float:left;
+}
+
+.HUBBanner {
+  width: 142px;
+  height: 62px;
+  float:right;
+}
+
+.topBanner {
+  height: 100px;
+  text-align: left;
+}
+
+.topText {
+  padding-top: 17px;
+}
+
+#header {
+  text-align: left;
+  
+}
+
+#chat {
+    height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#input {
+    height: 40px;
+}
+
+.inputText {
+  font-family: 'Gotham Medium';
+  width: 400px;
+  height: 22px;
+  font-size: 16px;
+}
+
+.sendButton {
+  background-color: #37C1F1;
+  color:black;
+  font-family: 'Gotham Black';
+  font-size: 18px;
+}
+
+
+
+/*
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -182,3 +294,4 @@
     border-right-color: var(--border);
   }
 }
+*/

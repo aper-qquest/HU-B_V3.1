@@ -1,3 +1,15 @@
+/*
+Qquest hexcodes:
+#FF3200 (fel rood)
+#37C1F1 (licht blauw)
+#091E38 (donker blauw)
+#000000 (zwart)
+#FFF (wit)
+Secundaire:
+#0849B2 (midden blauw)
+#3B3052 (paars)
+#B01D00 (donker rood)
+*/
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -30,17 +42,124 @@
   }
 }
 
+/* all gotham fonts loaded in */
+@font-face {
+  font-family: 'Gotham Black';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-Black.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Black';
+  font-style: italic;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-BlackItalic.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Gotham Bold';
+  font-style: normal;
+  font-display: swap;
+  font-weight: bold;
+  src: url('./assets/fonts/Gotham-Bold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Bold';
+  font-style: italic;
+  font-display: swap;
+  font-weight: bold;
+  src: url('./assets/fonts/Gotham-BoldItalic.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Gotham Book';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-Book.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Book';
+  font-style: italic;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-BookItalic.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Gotham Light';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-Light.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Light';
+  font-style: italic;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-LightItalic.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Gotham Medium';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-Medium.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Medium';
+  font-style: italic;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-MediumItalic.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Gotham Thin';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-Thin.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Thin';
+  font-style: italic;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-ThinItalic.otf') format('opentype');
+}
+
+@font-face {
+  font-family: 'Gotham Ultra';
+  font-style: normal;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-Ultra.otf') format('opentype');
+}
+@font-face {
+  font-family: 'Gotham Ultra';
+  font-style: italic;
+  font-display: swap;
+  font-weight: normal;
+  src: url('./assets/fonts/Gotham-UltraItalic.otf') format('opentype');
+}
+
+/* visual elements of text */
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
+    --text: #FFF;
+    --text-h: #37C1F1;
+    --bg: #091E38;
+    --border: #0000;
+    --code-bg: #0000;
+    --accent: #FF3200;
+    --accent-bg: #37C1F1;
+    --accent-border: #37C1F1;
+    --social-bg: #37C1F1;
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
@@ -68,7 +187,8 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: 'Gotham Black', sans-serif;
+  /*font-family: var(--heading);*/
   font-weight: 500;
   color: var(--text-h);
 }
@@ -78,7 +198,7 @@ h1 {
   letter-spacing: -1.68px;
   margin: 32px 0;
   @media (max-width: 1024px) {
-    font-size: 36px;
+    font-size: 35px;
     margin: 20px 0;
   }
 }
@@ -92,6 +212,7 @@ h2 {
   }
 }
 p {
+  font-family: 'Gotham Medium';
   margin: 0;
 }
 
