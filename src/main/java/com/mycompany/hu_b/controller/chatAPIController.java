@@ -1,7 +1,6 @@
 package com.mycompany.hu_b.controller;
 
 import com.mycompany.hu_b.service.ChatbotAntwoord;
-import com.mycompany.hu_b.service.PdfProcessing;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -15,30 +14,23 @@ import org.springframework.web.bind.annotation.*;
  */
 
 // toestaan van request vanuit browser om de backend aan te roepen
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:3000")
 // REST-controller voor communicatie tussen frontend en chatbot.
 @RestController
 @RequestMapping("/api/chat")
-public class chatAPIController {
+public class ChatAPIController {
 
     // Service die gebruikersvragen verwerkt.
     private final ChatbotAntwoord chatbot;
-    private final PdfProcessing knowledgeService;
 
-    public chatAPIController(ChatbotAntwoord chatbot, PdfProcessing knowledgeService) {
+    public ChatAPIController(ChatbotAntwoord chatbot) {
         this.chatbot = chatbot;
-        this.knowledgeService = knowledgeService;
     }
 
     // Testendpoint om te controleren of de API bereikbaar is.
     @GetMapping
     public String test() {
         return "Chat API werkt";
-    }
-
-    @GetMapping("/api/getChunks")
-    public String chunks() {
-        return "Aantal chunks: " + knowledgeService.getChunks().size();
     }
 
     // Ontvangt een gebruikersvraag en retourneert het chatbotantwoord.
