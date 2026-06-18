@@ -104,6 +104,7 @@
     box-sizing: border-box;
 
     text-wrap: balance;
+    white-space: pre-wrap;
 
     font-family: 'Gotham Light';
     font-size: 16px;
@@ -129,6 +130,48 @@
     
   .message.answer {
     background-color: #091E38;
+    border: 2px solid #37C1F1;
+      
+    border-bottom-left-radius: 0;
+    justify-content: flex-start;
+  }
+
+  .message-history {
+    margin: 0;
+    border-radius: 15px;
+    margin-bottom:  4px;
+    padding:        7px;
+    
+    width: max-content;
+    max-width: 80%;
+    box-sizing: border-box;
+
+    text-wrap: balance;
+    white-space: pre-wrap;
+
+    font-family: 'Gotham Light';
+    font-size: 16px;
+  }
+  .message-history.opening {
+    background-color: #091E38;
+    border: 2px solid #37C1F1;
+    
+    border-bottom-left-radius: 0;
+    justify-content: flex-start;
+    
+  }
+
+  .message-history.question {
+    background-color: #000000;
+    border: 2px solid #FFF;
+
+    margin-left: auto;
+    border-bottom-right-radius: 0;
+    justify-content: flex-end;
+  }
+  
+  .message-history.answer {
+    background-color: #000000;
     border: 2px solid #37C1F1;
       
     border-bottom-left-radius: 0;

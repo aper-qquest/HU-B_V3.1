@@ -32,6 +32,15 @@ import './App.css'
         </div>
       </div>
 
+    // setQH(prev => {
+    //   const newHistory = [...prev, {text: data, type: 'answer'}]
+    //   if ( newHistory.length >= rememberedMessageLimit  ) {
+    //     setHistoricChat(prev => [...prev, ...newHistory.slice(0,2)]);
+    //     return newHistory.slice(2);
+    //   } else {
+    //     return newHistory;
+    //   }
+    // });
 const [prev_questions, setPrevQ] = useState(initialQ);
   const [prev_answers, setPrevA] = useState(initialA);
 
@@ -53,14 +62,16 @@ Hier ben ik mee bezig om te kijken of ik een icon kan toevoegen, voornamelijk bi
             {msg.type === 'question' && ()}
           </div>
 
-          
+
 morgen: begin met typewriter effect. Gebruik video: https://www.youtube.com/watch?v=ZlZgE-xKRCE
 <Typewriter options={{string=JSON.stringify({msg.text}),autoStart=true,}} />
-            
+
+Eerst moet de chatgeschiedenis visueel worden aangegeven
+En ik wil op enter kunnen drukken ipv alleen maar op 'versturen'
 */
 
 function App() {
-  const rememberedMessageLimit = 20;
+  const rememberedMessageLimit = 20; /*hoort 20 te zijn, 6 is even voor test */
   /* Eigenlijk zou er in de opening verder ook gerbuikte bron & disclaimer moeten staan
   Volledige openingtekst in HU-B v2:
   Welkom! Ik ben HU-B, jouw HR-assistent.
@@ -68,13 +79,13 @@ function App() {
   Disclaimer: De informatie die HU-B geeft is mogelijk niet volledig of niet actueel. De informatie die gegeven is, is niet juridisch bindend. Raadpleeg bij twijfel altijd HR.
   De kennisbron is opgebouwd en opgeslagen in de cache. Je kunt nu vragen stellen.
   */
-  const openingText = "Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!"
+  const openingText = "Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!\n\nMaximaal 10 vragen uit de chatgeschiedenis worden meegenomen in een antwoord.\n Vragen die niet meer worden meegenomen worden verdonkerd weergegeven"
   const [question, setQuestion] = useState('');
-   /* qaHistory voor het meenemen van vorige vragen & antwoorden in de huidige vraag
-   Op dit moment wordt dit nog niet gebruikt */
+   /* qaHistory zijn de vragen & antwoorden die nog worden meegenomen door HU-B in de volgende antwoorden. deze worden getoond als 'gekleurde' berichten*/
   const [qaHistory, setQH] = useState([]);
-  /* dit is voor het tonen van berichten */
+  /* deze zijn voor het tonen van oude berichten */
   const [chatTotal, setChat] = useState([ {text: openingText, type: 'opening'}]);
+  const [chatHistoricOnly, setHistoricChat] = useState([ {text: openingText, type: 'opening'}]);
 
 
   const sendQuestion = async () => {
@@ -82,6 +93,7 @@ function App() {
 
     setChat(prev => [...prev, { text: currentQuestion, type: 'question'}]);
     setQH(prev => [...prev, { text: currentQuestion, type: 'question'}]);
+    
     setQuestion('');
     
     const response = await fetch('http://localhost:8080/api/chat', {
@@ -95,14 +107,11 @@ function App() {
 
     const data = await response.text();
     setChat(prev => [...prev, {text: data, type: 'answer'}]);
-    setQH(prev => {
-      const newHistory = [...prev, {text: data, type: 'answer'}]
-      if ( newHistory.length >= rememberedMessageLimit  ) {
-        return newHistory.slice(2);
-      } else {
-        return newHistory;
-      }
-    });
+    setQH(prev => [...prev, {text: data, type: 'answer'}]);
+    if ( qaHistory.length >= rememberedMessageLimit ) {
+      setHistoricChat(prev => [...prev, ...qaHistory.slice(0,2)]);
+      setQH(prev => prev.slice(2));
+    }
     
   };
 
@@ -118,7 +127,12 @@ function App() {
 
       <section id="chat">
         <h2>Jouw chatgesprek</h2>
-        {chatTotal.map((msg, i) => (
+        {chatHistoricOnly.map((msg, i) => (
+          <div key={i} className={`message-history ${msg.type}`}>
+            {msg.text}
+          </div>
+        ))}
+        {qaHistory.map((msg, i) => (
           <div key={i} className={`message ${msg.type}`}>
             {msg.text}
           </div>
