@@ -1,4 +1,4 @@
-package com.mycompany.hu_b.chatAPI;
+/*package com.mycompany.hu_b.chatAPI;
 
 public class ChatRequest {
 
@@ -11,4 +11,4 @@ public class ChatRequest {
     public void setQuestion(String question) {
         this.question = question;
     }
-}
+}*/

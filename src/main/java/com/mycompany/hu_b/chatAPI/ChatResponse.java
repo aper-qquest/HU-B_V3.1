@@ -1,3 +1,4 @@
+/*
 package com.mycompany.hu_b.chatAPI;
 
 public class ChatResponse {
@@ -11,4 +12,4 @@ public class ChatResponse {
     public String getAnswer() {
         return answer;
     }
-}
+} */

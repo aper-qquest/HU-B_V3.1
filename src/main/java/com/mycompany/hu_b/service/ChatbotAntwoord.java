@@ -67,6 +67,7 @@ public class ChatbotAntwoord {
         this.antwoordVerfijner = new ChatbotAntwoordVerfijner(knowledgeService, openAIService);
     }
 
+    // Deze wordt aangeroepen in ChatAPIController om de vraag te stellen
     public String ask(String question) throws Exception {
         if (question == null || question.isBlank()) {
             return "Ik help je graag. Kun je je vraag iets concreter formuleren?";
@@ -152,7 +153,7 @@ public class ChatbotAntwoord {
         normalizedAnswer = addEmailDraftOfferIfNeeded(normalizedAnswer, historyQuestion, effectiveQuestion, rankedChunks, sourceById);
 
         clearPendingClarification();
-        appendConversationTurn(historyQuestion, normalizedAnswer);
+        appendConversationTurn(historyQuestion, normalizedAnswer); // voeg vraag en antwoord toe aan chatgeschiedenis
         return normalizedAnswer;
     }
 
@@ -331,7 +332,7 @@ public class ChatbotAntwoord {
     private void clearPendingEmailDraft() {
         pendingEmailDraft = null;
     }
-
+    // pakt een lijst van de totale gespreksgeschiedenis in de sessie, geeft daaruit alleen de laatste paar mee (afhankelijk van hoeveel het mag meenemen)
     private List<org.json.JSONObject> getRecentConversationHistory(int maxMessages) {
         if (conversationHistory.isEmpty() || maxMessages <= 0) {
             return List.of();
@@ -340,7 +341,7 @@ public class ChatbotAntwoord {
         int start = Math.max(0, conversationHistory.size() - maxMessages);
         return new ArrayList<>(conversationHistory.subList(start, conversationHistory.size()));
     }
-
+    // mogelijk obsolete, wordt niet gebruikt (alleen most recent wordt gebruikt)
     private List<String> getRecentUserQuestions(int maxQuestions) {
         List<String> questions = new ArrayList<>();
         if (maxQuestions <= 0) {
@@ -377,7 +378,7 @@ public class ChatbotAntwoord {
 
         return null;
     }
-
+    // hier worden een vraag en antwoord toegevoegd aan de chatgeschiedenis
     private void appendConversationTurn(String userQuestion, String assistantAnswer) {
         conversationHistory.add(new org.json.JSONObject().put("role", "user").put("content", userQuestion));
         conversationHistory.add(new org.json.JSONObject().put("role", "assistant").put("content", assistantAnswer));
