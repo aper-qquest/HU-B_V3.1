@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import Typewriter from 'typewriter-effect';
 import qquestLogo from './assets/Qquest_Logo_Wit(RGB).png'
 import HUBIcon from './assets/rechthoekig-faceless-hub-logo-zwart.png'
 import './App.css'
+
 /*
       <h1>Chat visuele playground</h1>
       <div class="conversation">
@@ -51,6 +53,10 @@ Hier ben ik mee bezig om te kijken of ik een icon kan toevoegen, voornamelijk bi
             {msg.type === 'question' && ()}
           </div>
 
+          
+morgen: begin met typewriter effect. Gebruik video: https://www.youtube.com/watch?v=ZlZgE-xKRCE
+<Typewriter options={{string=JSON.stringify({msg.text}),autoStart=true,}} />
+            
 */
 
 function App() {
@@ -62,7 +68,7 @@ function App() {
   Disclaimer: De informatie die HU-B geeft is mogelijk niet volledig of niet actueel. De informatie die gegeven is, is niet juridisch bindend. Raadpleeg bij twijfel altijd HR.
   De kennisbron is opgebouwd en opgeslagen in de cache. Je kunt nu vragen stellen.
   */
-  const openingText = 'Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!'
+  const openingText = "Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!"
   const [question, setQuestion] = useState('');
    /* qaHistory voor het meenemen van vorige vragen & antwoorden in de huidige vraag
    Op dit moment wordt dit nog niet gebruikt */
@@ -108,9 +114,9 @@ function App() {
           <h1 className="topText">De personeelsgids Chatbot</h1>
         </div>          
       </section>
-      
+
       <section id="chat">
-        <h2>Antwoord (hier komt de chatgeschiedenis):</h2>
+        <h2>Jouw chatgesprek</h2>
         {chatTotal.map((msg, i) => (
           <div key={i} className={`message ${msg.type}`}>
             {msg.text}
@@ -131,7 +137,18 @@ function App() {
           Versturen
         </button>
       </section>
-      
+      <section>
+        <div>
+          <h2>Playground</h2>
+          <Typewriter options={{
+            strings: 'Ik ben het typewriter effect aan het testen',
+            autoStart: true,
+            delay: 40,
+            loop: true,
+          }} />
+        </div>
+      </section>
+
     </>
   );
 }
