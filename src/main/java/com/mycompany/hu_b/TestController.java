@@ -1,16 +1,17 @@
 package com.mycompany.hu_b;
 
 import com.mycompany.hu_b.service.PdfProcessing;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TestController {
 
-    private final PdfProcessing knowledgeService;
+    private final PdfProcessing pdfProcessing;
 
-    public TestController(PdfProcessing knowledgeService) {
-        this.knowledgeService = knowledgeService;
+    public TestController(PdfProcessing knowledgeService, PdfProcessing pdfProcessing) {
+        this.pdfProcessing = pdfProcessing;
     }
 
     @GetMapping("/")
@@ -22,9 +23,12 @@ public class TestController {
     public String test() {
         return "Backend werkt";
     }
+    
+    @GetMapping("/api/load")
+    public String load() throws Exception {
 
-    @GetMapping("/api/getChunks")
-    public String chunks() {
-        return "Aantal chunks: " + knowledgeService.getChunks().size();
+        pdfProcessing.loadFolder("bronnen");
+
+        return "Chunks: " + pdfProcessing.getChunks().size();
     }
 }

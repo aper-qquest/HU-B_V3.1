@@ -272,9 +272,19 @@ public class ChatbotAntwoordVerfijner {
 
         String sourceTarget = chunk.getSourceTarget();
         if (sourceTarget != null && !sourceTarget.isBlank()) {
+            if (sourceTarget.startsWith("file:")) {
+                String sourcePath = chunk.getSourcePath();
+                int page = forcedPage != null && forcedPage > 0 ? forcedPage : chunk.getPage();
+
+                return chunk.isSourcePdf() && page > 0
+                        ? toFileUriWithPage(sourcePath, page)
+                        : toFileUri(sourcePath);
+            }
+
             if (forcedPage != null && forcedPage > 0) {
                 return forcePageOnTarget(sourceTarget, forcedPage);
             }
+
             return sourceTarget;
         }
 
@@ -347,15 +357,23 @@ public class ChatbotAntwoordVerfijner {
         return trimmedUrl + "#page=" + page;
     }
 
-    private String toFileUriWithPage(String sourcePath, int page) {
-        if (sourcePath == null || sourcePath.isBlank() || page <= 0) {
-            return toFileUri(sourcePath);
-        }
+    // private String toFileUriWithPage(String sourcePath, int page) {
+    //     if (sourcePath == null || sourcePath.isBlank() || page <= 0) {
+    //         return toFileUri(sourcePath);
+    //     }
 
+    //     try {
+    //         return Path.of(sourcePath).toAbsolutePath().normalize().toUri().toString() + "#page=" + page;
+    //     } catch (Exception ex) {
+    //         return toFileUri(sourcePath);
+    //     }
+    // }
+    private String toFileUriWithPage(String sourcePath, int page) {
         try {
-            return Path.of(sourcePath).toAbsolutePath().normalize().toUri().toString() + "#page=" + page;
+            String bestand = Path.of(sourcePath).getFileName().toString();
+            return "/api/source/" + bestand + "?page=" + page;
         } catch (Exception ex) {
-            return toFileUri(sourcePath);
+            return null;
         }
     }
 
@@ -363,17 +381,27 @@ public class ChatbotAntwoordVerfijner {
         return "<a href=\"" + escapeHtml(href) + "\">" + escapeHtml(label) + "</a>";
     }
 
-    private String toFileUri(String sourcePath) {
-        if (sourcePath == null || sourcePath.isBlank()) {
-            return null;
-        }
+    // private String toFileUri(String sourcePath) {
+    //     if (sourcePath == null || sourcePath.isBlank()) {
+    //         return null;
+    //     }
 
+    //     try {
+    //         return Path.of(sourcePath).toAbsolutePath().normalize().toUri().toString();
+    //     } catch (Exception ex) {
+    //         return null;
+    //     }
+    // }
+
+    private String toFileUri(String sourcePath) {
         try {
-            return Path.of(sourcePath).toAbsolutePath().normalize().toUri().toString();
+            String bestand = Path.of(sourcePath).getFileName().toString();
+            return "/api/source/" + bestand;
         } catch (Exception ex) {
             return null;
         }
     }
+
 
     private String escapeHtml(String value) {
         if (value == null) {

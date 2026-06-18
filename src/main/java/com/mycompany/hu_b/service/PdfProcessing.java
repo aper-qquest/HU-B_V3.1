@@ -2,7 +2,11 @@ package com.mycompany.hu_b.service;
 
 import com.mycompany.hu_b.model.ChunkDraft;
 import com.mycompany.hu_b.model.ChunkEmbedding;
+
+import jakarta.annotation.PostConstruct;
+
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -31,6 +35,45 @@ public class PdfProcessing extends KnowledgeProcessingUtils {
     private static final Pattern CHAPTER_HEADER_PATTERN = Pattern.compile("^\\s*\\d{1,2}\\.\\s+[\\p{L}\\p{N}][\\p{L}\\p{N}'’\\- ]{0,60}\\s*$");
     private static final int PDF_FRAGMENT_WORD_LIMIT = 120;
     private static final int PDF_FRAGMENT_MAX_SPILL = 150;
+
+
+
+    @PostConstruct
+    public void init() {
+        try {
+            loadFolder("bronnen");
+            System.out.println("Chunks geladen: " + chunks.size());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void loadFolder(String folderPath) throws Exception {
+
+        Path folder = Path.of(folderPath);
+
+        List<String> bestanden = Files.list(folder)
+                .filter(Files::isRegularFile)
+                .map(Path::toString)
+                .toList();
+
+        if (bestanden.isEmpty()) {
+            throw new IllegalArgumentException("Geen bestanden gevonden.");
+        }
+
+        String hoofdDocument = bestanden.stream()
+                .filter(f -> f.toLowerCase().endsWith(".pdf"))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Geen PDF-hoofddocument gevonden."));
+
+        List<String> aanvullendeBronnen = bestanden.stream()
+                .filter(f -> !f.equals(hoofdDocument))
+                .toList();
+
+        loadGuide(hoofdDocument, aanvullendeBronnen);
+    }
+
 
     public PdfProcessing(OpenAI openAIService) {
         super(openAIService);
