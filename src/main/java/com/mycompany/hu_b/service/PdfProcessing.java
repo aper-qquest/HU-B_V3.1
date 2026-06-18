@@ -62,10 +62,10 @@ public class PdfProcessing extends KnowledgeProcessingUtils {
         }
 
         String hoofdDocument = bestanden.stream()
-                .filter(f -> f.toLowerCase().endsWith(".pdf"))
+                .filter(f -> f.toLowerCase().contains("personeelsgids"))
                 .findFirst()
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Geen PDF-hoofddocument gevonden."));
+                        new IllegalArgumentException("Personeelsgids niet gevonden."));
 
         List<String> aanvullendeBronnen = bestanden.stream()
                 .filter(f -> !f.equals(hoofdDocument))
