@@ -11,6 +11,14 @@ import java.net.URLEncoder;
 import java.net.http.*;
 import java.nio.charset.StandardCharsets;
 
+/*
+Filter voor authenticatie via het Qquest AI Centrum.
+
+Bij elk verzoek controleert deze filter of de gebruiker is ingelogd.
+In productie wordt de AI Centrum-cookie gebruikt om via /api/me
+ gebruikersgegevens en toegangsrechten op te halen.
+*/
+
 @Component
 public class CentrumAuthFilter implements Filter {
 
@@ -32,9 +40,10 @@ public class CentrumAuthFilter implements Filter {
             chain.doFilter(request, response);
             return;
         }
-
+        // Haalt de sessiecookie van het AI Centrum uit de request.
         String token = getCookieValue(httpRequest, "__Secure-authjs.session-token");
 
+        // Als er geen token is, is de gebruiker niet ingelogd.
         if (token == null || token.isBlank()) {
             redirectToLogin(httpRequest, httpResponse);
             return;
@@ -42,15 +51,22 @@ public class CentrumAuthFilter implements Filter {
 
         CentrumUser user = getUserFromCentrum(token);
 
+        // Als de sessie ongeldig is of de gebruiker geen toegang heeft,
+        // wordt de gebruiker doorgestuurd naar de loginpagina.
+
         if (user == null || !hasAccess(user)) {
             redirectToLogin(httpRequest, httpResponse);
             return;
         }
 
+        // Slaat de ingelogde gebruiker tijdelijk op in de request,
+        // zodat controllers deze informatie eventueel kunnen gebruiken.
         httpRequest.setAttribute("centrumUser", user);
         chain.doFilter(request, response);
     }
 
+    // Zoekt in alle cookies naar de cookie met de opgegeven naam.
+    // Wordt gebruikt om de AI Centrum-sessiecookie op te halen.
     private String getCookieValue(HttpServletRequest request, String cookieName) {
         if (request.getCookies() == null) {
             return null;
@@ -64,7 +80,8 @@ public class CentrumAuthFilter implements Filter {
 
         return null;
     }
-
+    // Stuurt de ontvangen sessiecookie door naar /api/me van het AI Centrum.
+    // Als de sessie geldig is, wordt de JSON-response omgezet naar CentrumUser.
     private CentrumUser getUserFromCentrum(String token) {
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -87,6 +104,9 @@ public class CentrumAuthFilter implements Filter {
         }
     }
 
+    // Controleert of de gebruiker toegang heeft tot HU-B. Toegang is toegestaan als de gebruiker admin is, 
+    // tot de branch 'algemeen' behoort, of expliciet toegang heeft via toolGrants.
+    
     private boolean hasAccess(CentrumUser user) {
         if (user.isAdmin) {
             return true;
@@ -99,6 +119,8 @@ public class CentrumAuthFilter implements Filter {
         return user.toolGrants != null && user.toolGrants.contains("personeelsgids");
     }
 
+    // Stuurt de gebruiker naar de loginpagina van het AI Centrum.
+    // De huidige URL wordt meegegeven als 'next', zodat de gebruiker na het inloggen terugkomt op HU-B.
     private void redirectToLogin(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
