@@ -25,6 +25,7 @@ import org.apache.pdfbox.pdmodel.interactive.action.PDActionURI;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotation;
 import org.apache.pdfbox.pdmodel.interactive.annotation.PDAnnotationLink;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 // Service voor het verwerken en doorzoeken van kennisbronnen.
@@ -36,13 +37,37 @@ public class PdfProcessing extends KnowledgeProcessingUtils {
     private static final int PDF_FRAGMENT_WORD_LIMIT = 120;
     private static final int PDF_FRAGMENT_MAX_SPILL = 150;
 
+    @Value("${app.sources.path}")
+    private String sourcesPath;
 
+    private final KnowledgeChunkCache chunkCache;
+
+    public PdfProcessing(OpenAI openAIService, KnowledgeChunkCache chunkCache) {
+        super(openAIService);
+        this.chunkCache = chunkCache;
+    }
 
     @PostConstruct
     public void init() {
         try {
-            loadFolder("bronnen");
-            System.out.println("Chunks geladen: " + chunks.size());
+            Path bronnenMap = Path.of(sourcesPath);
+
+            List<Path> sourceFiles = Files.list(bronnenMap)
+                    .filter(Files::isRegularFile)
+                    .toList();
+
+            Path cachePath = bronnenMap.resolve("chunks-cache.json");
+
+            if (chunkCache.isCacheValid(cachePath, sourceFiles)) {
+                chunks.clear();
+                chunks.addAll(chunkCache.loadChunks(cachePath));
+                System.out.println("Chunks geladen uit cache: " + chunks.size());
+            } else {
+                loadFolder(sourcesPath);
+                chunkCache.saveChunks(cachePath, chunks, sourceFiles);
+                System.out.println("Chunks opnieuw gemaakt en opgeslagen: " + chunks.size());
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -72,11 +97,6 @@ public class PdfProcessing extends KnowledgeProcessingUtils {
                 .toList();
 
         loadGuide(hoofdDocument, aanvullendeBronnen);
-    }
-
-
-    public PdfProcessing(OpenAI openAIService) {
-        super(openAIService);
     }
 
     // Leest de PDF in en maakt voor elke chunk een embedding.

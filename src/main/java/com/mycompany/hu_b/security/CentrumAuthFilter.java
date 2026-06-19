@@ -19,19 +19,28 @@ public class CentrumAuthFilter implements Filter {
 
     private static final String ME_URL = "https://qquestaicentrum.nl/api/me";
     private static final String LOGIN_URL = "https://qquestaicentrum.nl/login?next=";
-
+    
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-
+        
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        // Lokaal testen zonder AI Centrum-login
-        if ("true".equalsIgnoreCase(System.getenv("LOCAL_DEV"))) {
+       
+        String authEnabled = System.getenv("AUTH_ENABLED");
+            
+        // Authenticatie uitgeschakeld (zonder login)
+        if (!"true".equalsIgnoreCase(authEnabled)) {
             chain.doFilter(request, response);
             return;
         }
+
+        // chat zei dat dit handig zou zijn voor als er login komt
+        // if (path.equals("/health")) {
+        //     chain.doFilter(request, response);
+        //     return;
+        // }
 
         String token = getCookieValue(httpRequest, "__Secure-authjs.session-token");
 
