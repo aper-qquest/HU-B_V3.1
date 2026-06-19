@@ -103,6 +103,7 @@
     </dependencies>
 
     <build>
+        <!-- Spring Boot opstarten op maven -->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

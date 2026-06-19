@@ -41,8 +41,7 @@ function App() {
     
     setQuestion('');
     
-    const response = await fetch('http://localhost:8080/api/chat', {
-    /*const response = await fetch('http://localhost:9090/api/chat', { */
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'text/plain',
