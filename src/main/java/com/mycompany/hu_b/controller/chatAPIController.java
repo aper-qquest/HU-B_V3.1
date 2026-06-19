@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.*;
  * voor het opvragen van chatbotantwoorden.
  */
 
-// toestaan van request vanuit browser om de backend aan te roepen
-@CrossOrigin(origins = "http://localhost:3000")
 // REST-controller voor communicatie tussen frontend en chatbot.
 @RestController
 @RequestMapping("/api/chat")

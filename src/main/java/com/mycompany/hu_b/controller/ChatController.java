@@ -19,9 +19,12 @@ import java.util.List;
 import java.util.Locale;
 import javax.swing.SwingUtilities;
 
+import org.springframework.stereotype.Service;
+
 // De controller verwerkt verzonden vragen, controleert of de kennisbron geladen is,
 // start het laden van de personeelsgids en haalt antwoorden op via ChatbotAntwoord.
 // Resultaten en foutmeldingen worden teruggezet in het AppVenster (de UI).
+@Service
 public class ChatController {
 
     private final AppVenster view;
@@ -38,11 +41,12 @@ public class ChatController {
     public ChatController(AppVenster view) {
         this.view = view;
         this.openAIService = new OpenAI();
-        this.knowledgeService = new PdfProcessing(openAIService);
+        this.chunkCache = new KnowledgeChunkCache();
+        this.knowledgeService = new PdfProcessing(openAIService, chunkCache);
         this.answerService = new ChatbotAntwoord(knowledgeService, openAIService);
         this.webPageArchiveService = new WebPageArchiveService();
         this.view.setRememberedMessageLimit(answerService.getMaxHistoryMessages());
-        this.chunkCache = new KnowledgeChunkCache();
+        
     }
 
 // Methode die wordt aangeroepen wanneer gebruiker een vraag stelt
@@ -192,7 +196,7 @@ public class ChatController {
                     }
                 }
 
-                PdfProcessing stagedKnowledgeService = new PdfProcessing(openAIService);
+                PdfProcessing stagedKnowledgeService = new PdfProcessing(openAIService, chunkCache);
                 stagedKnowledgeService.loadGuide(resolveGuidePath(), rebuiltSupplementarySources);
                 chunkCache.saveChunks(cacheFile, stagedKnowledgeService.getChunks(), loadContext.sourceFiles());
                 knowledgeService.replaceChunks(stagedKnowledgeService.getChunks());
