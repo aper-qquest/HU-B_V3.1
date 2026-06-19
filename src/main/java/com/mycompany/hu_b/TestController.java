@@ -14,11 +14,6 @@ public class TestController {
         this.pdfProcessing = pdfProcessing;
     }
 
-    @GetMapping("/")
-    public String home() {
-        return "Spring Boot werkt!";
-    }
-
     @GetMapping("/api/test")
     public String test() {
         return "Backend werkt";
