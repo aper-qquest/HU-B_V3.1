@@ -1,20 +1,15 @@
 import { useState } from 'react';
+import { useRef, useEffect } from 'react';
 import Typewriter from 'typewriter-effect';
 import qquestLogo from './assets/Qquest_Logo_Wit(RGB).png'
-import HUBIcon from './assets/rechthoekig-faceless-hub-logo-zwart.png'
+import HUBIcon from './assets/rechthoekig-faceless-hub-logo-zwart.png' // tijdelijk! moet vervangen worden door de final
 import './App.css'
-
+import UserIcon from './assets/vraagteken.png' //tijdelijk! moet vervangen worden door een betere
 
 function App() {
+  const bottomRef = useRef(null);
   const rememberedMessageLimit = 20;
-  /* Eigenlijk zou er in de opening verder ook gerbuikte bron & disclaimer moeten staan
-  Volledige openingtekst in HU-B v2:
-  Welkom! Ik ben HU-B, jouw HR-assistent.
-  Gebruikte bron: Personeelsgids BU Talentclass versie 2024.1 en gelinkte bronnen
-  Disclaimer: De informatie die HU-B geeft is mogelijk niet volledig of niet actueel. De informatie die gegeven is, is niet juridisch bindend. Raadpleeg bij twijfel altijd HR.
-  De kennisbron is opgebouwd en opgeslagen in de cache. Je kunt nu vragen stellen.
-  */
-  const openingText = "Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!\n\nMaximaal 10 vragen uit de chatgeschiedenis worden meegenomen in een antwoord.\n Vragen die niet meer worden meegenomen worden verdonkerd weergegeven"
+  const openingText = "Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!\n\nMaximaal 10 vragen uit de chatgeschiedenis worden meegenomen in een antwoord. Vragen die niet meer worden meegenomen worden verdonkerd weergegeven"
   const opening2 = "Disclaimer:\nDe informatie die HU-B geeft is mogelijk niet volledig of niet actueel.\nDe informatie die gegeven is, is niet juridisch bindend. Raadpleeg bij twijfel altijd HR."
   const [question, setQuestion] = useState('');
    /* qaHistory zijn de vragen & antwoorden die nog worden meegenomen door HU-B in de volgende antwoorden. deze worden getoond als 'gekleurde' berichten*/
@@ -22,8 +17,22 @@ function App() {
   /* deze zijn voor het tonen van oude berichten */
   const [chatTotal, setChat] = useState([ {text: openingText, type: 'opening'}]);
   const [chatHistoricOnly, setHistoricChat] = useState([ {text: openingText, type: 'opening'},{text: opening2, type: 'disclaimer'}]); 
-  
+  useEffect(() => {
+    const container = bottomRef.current;
+    if (!container) return;
 
+    const observer = new MutationObserver(() => {
+      container.scrollTop = container.scrollHeight;
+    });
+    observer.observe(container, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    return () => observer.disconnect();
+  }, []);
+  
   const sendQuestion = async () => {
     const currentQuestion = question;
 
@@ -61,15 +70,32 @@ function App() {
         </div>          
       </section>
 
-      <section id="chat">
+      <section id="chat" ref={bottomRef}>
         <h2>Jouw chatgesprek</h2>
         {chatHistoricOnly.map((msg, i) => (
           <div key={i} className={`message-history ${msg.type}`}>
-            {msg.text}
+            <div>
+              {msg.type === 'opening' && (
+                <img src={HUBIcon} alt="HU-B profile picture" className="avatar" />
+              )}
+            </div>
+            <div>
+              {msg.text}
+            </div>
           </div>
+          
+
         ))}
         {qaHistory.map((msg, i) => (
           <div key={i} className={`message ${msg.type}`}>
+            <div>
+              {msg.type === 'answer' && (
+                <img src={HUBIcon} alt="HU-B profile picture" className="avatar" />
+              )}
+              {msg.type === 'question' && (
+                <img src={UserIcon} alt="HU-B profile picture" className="avatar" />
+              )}
+            </div>
             <Typewriter
               onInit={(typewriter) => {
                 typewriter.typeString(msg.text).start();
@@ -79,7 +105,6 @@ function App() {
                 cursor: '',
               }}
               />
-              
           </div>
         ))}
         </section>

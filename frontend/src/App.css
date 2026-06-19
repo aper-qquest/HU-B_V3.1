@@ -132,9 +132,10 @@
   }
 
   .avatar {
-    width: 20px;
-    height: 15px;
-    object-fit: cover;
+    width: 60px;
+    height: 45px;
+    border-radius: 50%;
+    /* object-fit: cover; */
     flex-shrink: 0;
   }
 }
