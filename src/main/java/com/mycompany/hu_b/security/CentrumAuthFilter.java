@@ -43,9 +43,6 @@ public class CentrumAuthFilter implements Filter {
             chain.doFilter(request, response);
             return;
         }
-<<<<<<< HEAD
-        // Haalt de sessiecookie van het AI Centrum uit de request.
-=======
 
         // chat zei dat dit handig zou zijn voor als er login komt
         // if (path.equals("/health")) {
@@ -53,7 +50,6 @@ public class CentrumAuthFilter implements Filter {
         //     return;
         // }
 
->>>>>>> origin/hosten-voorbereiding
         String token = getCookieValue(httpRequest, "__Secure-authjs.session-token");
 
         // Als er geen token is, is de gebruiker niet ingelogd.
