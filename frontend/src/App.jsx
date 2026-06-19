@@ -5,8 +5,29 @@ import qquestLogo from './assets/Qquest_Logo_Wit(RGB).png'
 import HUBIcon from './assets/rechthoekig-faceless-hub-logo-zwart.png' // tijdelijk! moet vervangen worden door de final
 import './App.css'
 import UserIcon from './assets/vraagteken.png' //tijdelijk! moet vervangen worden door een betere
+/*
+import { Routes, Route } from 'react-router-dom';
+import Home from './Home';
+import TCChat from './TCChat';
+import QAChat from './QAChat';
+import ServiceChat from '.ServiceChat';
+*/
 
 function App() {
+  //Voor de toekomst gaat deze hele functie veranderen in dit:
+  /*
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/TCChat" element={<TCChat />} />
+      <Route path="/QAChat" element={<QAChat />} />
+      <Route path="/ServiceChat" element={<ServiceChat />} />
+    </Routes>
+  )
+  */
+  //De onderstaande code komt verder allemaal op de TCChat pagina (hier is al een bestand voor aangemaakt)
+  //alle imports kunnen hier dan waarschijnlijk ook uit, behalve de paginas zelf
+  
   const bottomRef = useRef(null);
   const rememberedMessageLimit = 20;
   const openingText = "Welkom! Ik ben HU-B, jouw HR-assistent. Je kunt nu vragen stellen!\n\nMaximaal 10 vragen uit de chatgeschiedenis worden meegenomen in een antwoord. Vragen die niet meer worden meegenomen worden verdonkerd weergegeven"
@@ -58,7 +79,7 @@ function App() {
     }
     
   };
-
+  
   return (
     <>
       <section id="header">
